@@ -1,10 +1,64 @@
-# Compare Local and SQL Tables 
+# Compare Tables
+## What it does
+A set of tools to compare Local and SQL Tables to validate data is correct and free from corruption at the end of a data pipeline. 
+
+## How it works
+When data travels through a pipeline there is always risk for data corruption. 
+
+Often this occurs when using joins to merge datasets. 
+Missing data from the lookup table can cause dropped records.
+Duplicate keys in the lookup table can cause duplicates in your final results. 
+Calculated fields that are dependent on fields with incorrect or NULL values
+
+Data is often aggregated or split when moving through a data pipeline which means source and target tables cannot be compared directly as the record level identifier will no longer be applicable. 
+
+To get around this both tables will be aggregated by a common set of fields which then becomes the fields that the 2 tables are joined on. 
+
+Often there will be a numeric field that can be summed in both tables and then subtracted from each other to find a difference. 
 
 1. Makes 2 tables comparable
 2. Compares them to find variances
 3. Summarise the results of multiple tests / comparisons
 4. Drill down to view the details for variances
 5. Use machine learning to assist with identifying the cause of variances.
+
+## How to use it
+
+### Specify the table you want to validate
+
+Table1 is the table to check. Often this is a database table that might have too many records to pull into a local dataframe
+
+### Specify the reference table/s
+
+Table2 is the reference table that table1 should conform to. Often there will be several reference files setup to conduct different types of tests. 
+
+For example
+Lets say we know our table to check contains a number of categorical fields that we believe should remain constant between the beginning and end of a data pipeline. One reference table might be setup aggregated those categorical fields to validate no lost or duplicated data.
+
+Validating Data
+Some reference tables can be setup to show valid combinations. 
+
+### Review Summary Test Results
+Running multiple tests can often results containing thousands of records which can be difficult to review. From a high level view it's useful to simply review a record count / percentage pass and fail rate for each test. If there is a metric column such as dollar amount, it be useful to review this too to view impact / materiality of errors. 
+
+Summary reports contain the follow details
+
+test_name
+result
+result_detail
+common_grouping_columns
+x_value
+y_value
+diff
+n
+pct
+acceptable_values
+top_n_detail_fields
+
+
+
+
+
 
 
 
