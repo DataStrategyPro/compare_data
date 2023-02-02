@@ -1,4 +1,9 @@
 # Compare Tables
+
+Enable non-technical users to configure tests
+Reduce the amount of technical resources required to setup tests
+Reduce the time it takes to investigate discrepancies
+
 ## What it does
 A set of tools to compare Local and SQL Tables to validate data is correct and free from corruption at the end of a data pipeline. 
 
@@ -49,18 +54,10 @@ result_detail
 common_grouping_columns
 x_value
 y_value
-diff
-n
+diff: x_value - y_value
+n: count(x) + replace_na(y_value,1), this is done so that missing data can also be accounted for
 pct
 acceptable_values
 top_n_detail_fields
-
-
-
-
-
-
-
-
 
 1. Groups by common non-numeric fields. This ensures join fields are unique and comparable between tables.
