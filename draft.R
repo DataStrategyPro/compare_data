@@ -56,10 +56,6 @@ gb <- function(df,gb=NULL){
   return(df)
 }
 
-class(df)
-
-df %>% head(1000)
-
 
 write_result_csv <- function(df,test_name,limit=1000,write=FALSE){
   if(write){
@@ -76,7 +72,6 @@ write_result_csv <- function(df,test_name,limit=1000,write=FALSE){
   }
 }
 
-db_write
 
 df %>% write_result_csv('test')
 
@@ -87,33 +82,12 @@ mk_test_name(df)
 df_ws <- mpg %>% head(10) %>% 
   mutate_if(is.character,~str_c(.,' ')) 
 
-sql_query_insert(con,x_name = 'mpg',y = df_ws,conflict = 'ignore') 
-
-copy_to(con,df = df_ws,name = 'mpg',append=TRUE) %>% show_query()
-
-DBI::dbWriteTable(con,'mpg',df_ws,append=TRUE) %>% sql_render()
-dbWriteTable(con, "test_table", mtcars[2:5, ], append = TRUE)
-
-
 db_mpg %>% count()
 
 db_mpg %>% 
-  rows_append(df_ws,in_place = TRUE,copy = TRUE) %>% 
-  show_query()
-
-dbplyr::db
+  rows_append(df_ws,in_place = TRUE,copy = TRUE) 
 
 db_mpg %>% count()
-
-
-rows_insert()
-
-mpg %>% count()
-check_white_space(df){
-  
-}
-
-df %>% map(unique)
 
 
 get_distinct_col_values <- function(df,col){
