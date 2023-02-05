@@ -71,45 +71,23 @@ check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='w
 }
 
 
-check_null_count <- function(df,gb=NULL,test_name=NULL){
+check_null_columns <- function(df,test_name=NULL){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'null_count')
   }
-  df <- gb(df,gb)
+
+  row_count <- df %>% count() %>% pull(n)
   
   df %>% 
     mutate_all(is.na) %>% 
     summarise_all(sum,na.rm=TRUE) %>%
-    pivot_longer()
-  add_test_name(test_name)
-}
-
-
-# If nulls allowed warning, otherwise fail
-check_null_pct <- function(df,gb=NULL,test_name=NULL){
-  if(is.null(test_name)){
-    test_name <- mk_test_name(df,'null_pct')
-  }
-  row_count <- df %>% count() %>% pull(n)
-  df <- gb(df,gb)
-  
-  df %>% 
-    mutate_all(~as.double(is.na(.))/row_count) %>% 
-    summarise_all(sum,na.rm=TRUE) %>% 
+    pivot_longer(everything(),names_to = 'column_name',values_to = 'value') %>% 
+    mutate(pct = as.double(value) / row_count,
+           n = case_when(value == 0 ~ row_count,.default = pct * row_count),
+           result = case_when(value == 0 ~ 'Pass',.default = 'Warning'),
+           result_detail = case_when(value == 0 ~ '',.default = paste0("Column [",column_name,"] contains ",round(pct * 100,0),"% NULLs"))
+    ) %>% 
     add_test_name(test_name)
-}
-
-check_contains_nulls <- function(df,gb=NULL,test_name=NULL){
-  if(is.null(test_name)){
-    test_name <- mk_test_name(df,'contains_nulls')
-  }
-  
-  df <- check_null_pct(df,gb)  
-  print(test_name)
-  df %>% 
-    mutate_all(~ifelse(.>0,'Complete','Has Nulls')) %>%
-    add_test_name(test_name)
-  # Should this return boolean or text? Text is easier for business users to interpret 
 }
 
 check_distinct_count <- function(df,gb=NULL,test_name=NULL){

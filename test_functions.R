@@ -51,33 +51,9 @@ db_mpg %>% check_white_space()
 df %>% summarise_all(sum) %>% 
   pivot_longer(cols = everything(),names_to = 'column_name',values_to = 'value')
 
-df %>% check_null_count()  
-df %>% check_null_count('category')  
-df %>% check_null_count(gb=c('category','id'))  
-df %>% check_null_count(gb=c('category','id'),test_name = 'asdf')  
 
-
-row_count <- df %>% count() %>% pull(n)
-
-df
-df %>% 
-  group_by(id) %>% 
-  mutate_all(~as.double(is.na(.))/row_count) %>% 
-  summarise_all(sum,na.rm=TRUE) %>% 
-  pivot_longer(-category,names_to = 'column') %>% 
-  mutate(n=1)
-
-df %>% check_null_pct()  
-df %>% check_null_pct('category')  
-df %>% check_null_pct(gb=c('category','id'))  
-df %>% check_null_pct(gb=c('category','id'),test_name = 'asdf')  
-
-
-df %>% check_contains_nulls()  %>% sql_render()
-df %>% check_contains_nulls('category')  
-df %>% check_contains_nulls(gb=c('category','id'))  
-df %>% check_contains_nulls(gb=c('category','id'),test_name = 'asdf')  
-
+df %>% check_null_columns() 
+df %>% check_null_columns(test_name = 'asdf')
 
 
 df %>% check_distinct_count()  
