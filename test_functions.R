@@ -13,7 +13,8 @@ copy_to(con, mpg)
 
 # Setup test data ---------------------------------------------------------
 
-df_null <- tibble(id=1:5,category=c(rep('A',3),rep('B',2)),value=c(2,2,NA,NA,3)) 
+df_null <- tibble(id=1:5,category=c(rep('A',3),rep('B',2)),date = rep(lubridate::ymd('2023-01-01'),5),value=c(2,2,NA,NA,3)) 
+
 df_null
 copy_to(con,df_null,overwrite = TRUE)
 df <- tbl(con,'df_null')
@@ -26,6 +27,7 @@ ref <- tibble(id=2:6,category=c(rep('A',3),rep('B',2)),value=c(2,2,NA,NA,3))
 copy_to(con,ref,overwrite = TRUE)
 db_ref <- tbl(con,'ref')
 
+df %>% select_if(is.character)
 
 
 df %>% write_result_csv('test')
@@ -48,7 +50,7 @@ db_mpg %>% count()
 db_mpg %>% check_white_space()
 
 
-df %>% summarise_all(sum) %>% 
+df %>% summarise_all(sum,na.rm=TRUE) %>% 
   pivot_longer(cols = everything(),names_to = 'column_name',values_to = 'value')
 
 
