@@ -87,12 +87,14 @@ check_null_columns <- function(df,test_name=NULL,print_sql=FALSE){
   df <- df %>% 
     mutate_all(~is.na(.) %>% as.integer()) %>% 
     summarise_all(sum,na.rm=TRUE)
-  
-  if(print_sql){
-      print(sql_render(df))
-  }
-  
-  df <- df %>% collect()
+
+  if(is(df,'tbl_sql')){
+    if(print_sql){
+        print(sql_render(df))
+    }
+    
+    df <- df %>% collect()
+  }    
   
   df %>% 
     pivot_longer(everything(),names_to = 'column_name',values_to = 'value') %>% 
