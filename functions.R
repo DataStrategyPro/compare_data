@@ -45,15 +45,21 @@ write_result_csv <- function(df,test_name,limit=1000,write=FALSE){
 }
 
 get_distinct_col_values <- function(df,col){
-  df %>% 
-    count(!!sym(col)) %>% 
-    pivot_longer(cols = !!sym(col), names_to = 'column_name',values_to = 'distinct_values') %>% 
-    mutate(
-      white_space = str_length(distinct_values) > str_length(trimws(distinct_values)),
-      result = case_when(white_space==1 ~ 'Fail', .default = 'Pass'),
-      result_detail = case_when(white_space==1 ~ paste0("Column [",column_name,"] '",distinct_values,"' contains white space"), .default = ''),
-    ) %>% 
-    collect()
+  tryCatch({
+    df <- df %>% 
+      count(!!sym(col)) %>% 
+      pivot_longer(cols = !!sym(col), names_to = 'column_name',values_to = 'distinct_values') %>% 
+      mutate(
+        white_space = str_length(distinct_values) > str_length(trimws(distinct_values)),
+        result = case_when(white_space==1 ~ 'Fail', .default = 'Pass'),
+        result_detail = case_when(white_space==1 ~ paste0("Column [",column_name,"] '",distinct_values,"' contains white space"), .default = ''),
+      ) %>% 
+      collect()
+    return(df)
+  },
+  error = function(e){
+    print(e)
+  })
 }
 
 # Check Functions ----------------------------------------------------------
@@ -71,21 +77,35 @@ check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='w
 }
 
 
-check_null_columns <- function(df,test_name=NULL){
+check_null_columns <- function(df,test_name=NULL,print_sql=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'null_count')
   }
 
   row_count <- df %>% count() %>% pull(n)
   
+  df <- df %>% 
+    mutate_all(~is.na(.) %>% as.integer()) %>% 
+    summarise_all(sum,na.rm=TRUE)
+
+  if(is(df,'tbl_sql')){
+    if(print_sql){
+        print(sql_render(df))
+    }
+    
+    df <- df %>% collect()
+  }    
+  
   df %>% 
-    mutate_all(is.na) %>% 
-    summarise_all(sum,na.rm=TRUE) %>%
     pivot_longer(everything(),names_to = 'column_name',values_to = 'value') %>% 
     mutate(pct = as.double(value) / row_count,
-           n = case_when(value == 0 ~ row_count,.default = pct * row_count),
-           result = case_when(value == 0 ~ 'Pass',.default = 'Warning'),
-           result_detail = case_when(value == 0 ~ '',.default = paste0("Column [",column_name,"] contains ",round(pct * 100,0),"% NULLs"))
+           # this n shows the number of items in that column which meet the criteria. Consider dropping
+           n = ifelse(value == 0,row_count,pct * row_count),
+           result = ifelse(value == 0,'Pass','Warning'),
+           result_detail = ifelse(value == 0,'No NULLs',paste0("Column [",column_name,"] contains ",round(pct * 100,0),"% NULLs")),
+          # n has been adjusted to show the percentage of columns that have nulls or not. 
+           n=1,
+           pct = n / sum(n)
     ) %>% 
     add_test_name(test_name)
 }
