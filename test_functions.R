@@ -77,10 +77,33 @@ df %>% check_zero_balance('value',gb=c('category','id'))
 df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')  
 
 
+
+df %>% select(where(is.numeric))
+
+
+df %>% check_diff_on_fields(ref,'x',gb='id')  
 df %>% check_diff_on_fields(ref,'value',gb='id')  
 df %>% check_diff_on_fields(ref,'value',gb=c('id','category'))  
 df %>% check_diff_on_fields(ref,'value',gb=c('category'))  
 df %>% check_diff_on_fields(ref,'value',gb=c('category','id'),test_name = 'asdf')  
 
 
+library(dplyr)
 
+summarise_df <- function(df, fields = NULL) {
+  if (is.null(fields)) {
+    fields <- names(df)
+  }
+  df %>%
+    summarise_all(list(sum = sum, mean = mean, sd = sd, min = min, max = max), .vars = fields)
+}
+
+df %>% 
+  mutate(n=1) %>% 
+  summarise_if(is.numeric,sum,na.rm=TRUE)
+
+
+df %>% summarise_df('value')
+
+  df %>%
+    summarise_all(list(sum = sum, mean = mean, sd = sd, min = min, max = max))

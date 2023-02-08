@@ -197,18 +197,129 @@ check_diff <- function(df,ref){
 
 # table x has a list of all of the acceptable values
 # table y is compared to table x and fails if a combination is not within the acceptable values
-check_acceptable <- function(df){
+check_acceptable <- function(df,ref,){
   
 }
 
-get_group_samples <- function(df,lkp,n){
+mk_acceptable_value_lkp <- function(df,gb,acceptable_value_col){
+  df <- df %>% 
+    group_by(!!!syms(gb)) %>% 
+    mutate("valid_{acceptable_value_col}s" := str_c(!!sym(acceptable_value_col),collapse = ',')) %>% 
+    select(!!!syms(gb),matches(glue("valid_{acceptable_Value_col}s"))) %>% 
+    distinct()
   
+  return(df)
+}
+
+check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_value_col=NA,print_sql=FALSE,subset_by_ref=FALSE){
+  set <- intersect(names(dbf),names(ref))
+  print(glue("Tables joined on {str_c(set,collapse=',')}"))
+  ref_cols <- names(ref)
+  dropped_columns <- setdiff(set,ref_cols)
+  summarise_cols <- na.omit(c(db_value_col,'n'))
+  print(glue("Dropping from reference table {str_c(dropped_columns,collapse=',')}"))
+  
+  if(!is.na(acceptable_value_col)){
+    ref_for_acceptable_values <- ref %>% 
+      mutate_at(vars(!!syms(set)),keep_all=TRUE) %>% 
+      mutate_if(is.character,replace_na,'')
+  }
+  ref <- ref %>% 
+    distinct_at(.vars = vars(!!!syms(set)),.keep_all = TRUE) %>% 
+    mutate_if(is.character,replace_na,'')
+  
+  df <- dbf %>% 
+    mutate_if(is.character,~case_when(is.na(.) ~ '', TRUE ~ trimws(.) )) %>% 
+    mutate(n=1) %>% 
+    group_by(!!!syms(set)) %>% 
+    summarise_at(summarise_cols,sum,na.rm=TRUE) %>% 
+    mutate(.merge.x=1)
+  
+  if(subset_by_ref){
+    df <- df %>% right_join(ref %>% mutate(.merge.y = 1),copy = TRUE)
+  } else{
+    df <- df %>% full_join(ref %>% mutate(.merge.y = 1),copy = TRUE)
+  }
+  
+  df <- df %>% 
+    mutate(result = ifelse(is.na(.merge.x),'Warning', ifelse(is.na(.merge.y),'Fail','Pass')),
+           result_detail = ifelse(is.na(.merge.x),'Not in data', ifelse(is.na(.merge.y),'Not in reference file','Pass'))
+    ) %>% 
+    replace_na(list(n=1)) %>% 
+    ungroup() %>% 
+    mutate(pct = n / sum(n)) %>% 
+    select(-.merge.x,-.merge.y) %>% 
+    arrange(desc(n))
+  
+  if(is(dbf,'tbl_sql')){
+    if(print_sql){
+      sql <- df %>% sql_render()
+      print(sql)
+    }
+    df <- df %>% collect()
+  }
+  
+  if(is.na(db_value_col)){
+    df <- df %>% select(!!!syms(ref_cols),result,result_detail,n,pct)
+  }else{
+    df <- df %>% select(!!!syms(ref_cols),db_value = !!sym(db_value_col),result,result_detail,n,pct)
+    if(!is.na(ref_value_col)){
+      df <- df %>% 
+        rename(ref_value = !!sym(ref_value_col)) %>% 
+        mutate(
+          diff = db_value - ref_value,
+          result = ifelse(replace_na(diff,0) != 0,'Fail',result),
+          result_detail = ifelse(replace_na(diff,0) != 0,'Values dont match', result_detail)
+        )
+      relocate(diff,.after=db_value)
+    }
+  }
+  if(!is.na(acceptable_value_col)){
+    gb <- set[!set %in% acceptable_value_col]
+    df_acceptable_value_lkp <- mk_acceptable_value_lkp(ref_for_acceptable_values,gb,acceptable_value_col)
+    df <- df %>% left_join(df_acceptable_value_lkp,by=gb)
+  }
+  return(df)
+}
+
+
+get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALSE){
+  # Get the top n records for each group
+  df <- df %>% 
+    group_by(result,result_detail) %>% 
+    filter(row_number()<=n) %>% 
+    ungroup()
+  
+  set <- intersect(names(df),names(lkp))
+  df_names = names(df)
+  
+  db <- lkp %>% 
+    inner_join(df,copy = TRUE) %>% 
+    mutate(temp=1) %>% 
+    group_by(!!!syms(set)) %>% 
+    slice_sample(temp,n=n,with_ties=FALSE) %>% 
+    select(-temp) %>% 
+    select({{df_names}},any_of(add_cols),if(all_cols){everything()})
+  
+  if(print_sql){
+    sql <- db %>% sql_render()
+    print(sql)
+  }
+  
+  db %>% collect() %>% return()
 }
 
 # Uses machine learning to help investigate the causes of failed records. 
 # Identifies the relationship
 investigate_results <- function(df){
   
+}
+
+summarise_result <- function(df){
+  df %>% 
+    group_by(result,result_detail) %>% 
+    summarise_if(is.numeric,sum,na.rm=TRUE) %>% 
+    arrange(desc(n))
 }
 
 summarise_results <- function(folder){
