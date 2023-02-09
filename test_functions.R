@@ -81,29 +81,28 @@ df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')
 df %>% select(where(is.numeric))
 
 
-df %>% check_diff_on_fields(ref,'x',gb='id')  
-df %>% check_diff_on_fields(ref,'value',gb='id')  
+df_result <- df %>% check_diff_on_fields(ref,'value',gb='id')  
 df %>% check_diff_on_fields(ref,'value',gb=c('id','category'))  
 df %>% check_diff_on_fields(ref,'value',gb=c('category'))  
 df %>% check_diff_on_fields(ref,'value',gb=c('category','id'),test_name = 'asdf')  
 
 
-library(dplyr)
 
-summarise_df <- function(df, fields = NULL) {
-  if (is.null(fields)) {
-    fields <- names(df)
-  }
-  df %>%
-    summarise_all(list(sum = sum, mean = mean, sd = sd, min = min, max = max), .vars = fields)
+df_result %>% filter(result=='Fail')
+
+df <- tibble(id=1:5,category=c(rep('A',3),rep('B',2)),date = rep(lubridate::ymd('2023-01-01'),5),value=c(2,2,NA,NA,3)) 
+
+dynamic_filter <- function(df,conditions){
+  df %>% filter(conditions)
 }
 
-df %>% 
-  mutate(n=1) %>% 
-  summarise_if(is.numeric,sum,na.rm=TRUE)
+dynamic_filter <- function(df, conditions){
+  condition_str <- paste(conditions, collapse=" & ")
+  df %>% filter(!!rlang::parse_expr(condition_str))
+}
 
+df %>% dynamic_filter(conditions = c("category=='A'","id<=2")) %>% sql_render()
+mpg %>% dynamic_filter(c("year==1999","cyl==4"))
 
-df %>% summarise_df('value')
-
-  df %>%
-    summarise_all(list(sum = sum, mean = mean, sd = sd, min = min, max = max))
+conditions = c("category=='A'","id<=2")
+paste(conditions, collapse=" & ")
