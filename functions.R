@@ -197,7 +197,7 @@ check_diff <- function(df,ref){
 
 # table x has a list of all of the acceptable values
 # table y is compared to table x and fails if a combination is not within the acceptable values
-check_acceptable <- function(df,ref,){
+check_acceptable <- function(df,ref){
   
 }
 
@@ -309,12 +309,6 @@ get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALS
   db %>% collect() %>% return()
 }
 
-# Uses machine learning to help investigate the causes of failed records. 
-# Identifies the relationship
-investigate_results <- function(df){
-  
-}
-
 summarise_result <- function(df){
   df %>% 
     group_by(result,result_detail) %>% 
@@ -322,6 +316,8 @@ summarise_result <- function(df){
     arrange(desc(n))
 }
 
+# Loop through a folder of result output files
 summarise_results <- function(folder){
-  
+  fs::dir_ls(folder) %>% 
+    map_dfr(~summarise_result(read_csv(.)))
 }

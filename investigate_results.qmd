@@ -1,0 +1,203 @@
+---
+title: "Investigate Results"
+format: html
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+## What it does?
+
+The check functions in this library typically check records to see if
+they are
+
+-    null
+
+-    missing
+
+-    different
+
+-    malformed (eg contains white space or fails to match a regex
+    pattern)
+
+-    acceptable (within a table of acceptable values)
+
+Where specified these checks will create a results table where result is
+one of 'Pass','Fail','Warning','Info'
+
+The investigate_result() function helps drill into the detail to
+discover the cause of 'Fail' results
+
+Checks are often done on an aggregate level. This is done because
+
+1\. Rule sets are often high level
+
+2\. Data needs to be aggregated to make it comparable
+
+3\. Checking rules on aggregates compute significantly faster
+
+4\. Results are easier to understand
+
+5.  Checks should be done at the lowest level possible
+
+Often though the reason a test is 'Fail' requires details at a lower
+amount of detail than the test itself.
+
+For example a test fails because a value is NULL but the underlying
+cause is something like
+
+-   An upstream dependent field is NULL
+
+-   A lookup table in a table join is missing data
+
+-   There are multiple merged source systems and one system doesn't
+    contain that field
+
+As tables can often contain millions of records and hundreds of columns
+it can be difficult to review the appropriate underlying data to
+determine where you might even need to start investigating.
+
+That's where machine learning can help to efficiently check the
+relationship between every field to determine what fields are relevant
+to your result.
+
+## How it works
+
+investigate_results(result_table,source_table)
+
+The results_table will have the result column transformed into our
+target column called 'failed' where result 'Fail' is converted to 1 and
+everything else is converted to 0 which we will refer to as 'not failed'
+throughout this document
+
+The result_table is then joined onto the source_table to add the
+'failed' column
+
+The join is done on the aggregate categorical columns in the results.
+
+Since the test is done at this level of aggregation, all of the results
+for a group will have the same result classification.
+
+To work properly we need to ensure that the result_table contains the
+level of granularity that the test was performed at otherwise the join
+will not work.
+
+Ie the result_table can't be a summary grouped on just test_name,
+result.
+
+investigate_nulls(df,null_col)
+
+a result table can't be passed in because the is_null calculation has to
+be redone as a record level.
+
+investigate_missing()
+
+## Sampling the data
+
+Note that it's common to have results which are mostly 'not failed' with
+only a very small amount of 'failed' records.
+
+For machine learning to work well we need a balanced dataset of roughly
+equal number of 'failed' and 'not failed' records to deal with this we
+need to use sample(replace=TRUE) to increase the sample of failed
+records in the training set
+
+## Data volume
+
+Samples taken before column transformation can reduce the computation
+required to transform all of the columns which is valuable for large
+datasets
+
+However samples taken after column transformation can ensure every
+feature permutation is utilized in the training data
+
+smaller datasets \< 1,000,000 rows x 100 columns (ie data that can fit
+in memory) transformations can be easily done on both local dataframes
+or SQL engines.
+
+SQL engines or disk.frame can be used to process larger datasets.
+
+Note that older OLTP based engines such as SQL Server transformation on
+millions of records is still a relatively expensive operation.
+
+Newer OLAP engines such as Snowflake or Big Query will be significantly
+more efficient.
+
+if transformation is fast the recommendation is to - transform first -
+extract distinct - count distinct for 'not failed' records - over sample
+the 'failed' records to match the 'not failed' count - use all of the
+'not failed records' and sample of 'failed' records for training
+
+If transformation is slow - capture a sample of the data
+sample(replace=FALSE) - typically you'd want to include all 'failed'
+records if there's not too many of them - and include a large enough
+sample of the 'not failed' records - sample size should be based on a
+trade off between processing time and completeness - conduct
+transformation steps as listed above
+
+## Feature Preparation
+
+Create \_is_null versions for all columns that contain nulls Find
+categorical fields by looking for low cardinality character columns
+Consider doing some sort of factor lump on categories with a medium
+cardinality and highly skewed density plot
+
+High cardinality text fields such as IDs can be converted into a string
+length or regex pattern This is because IDs often follow a certain
+format however integration of multiple systems / data sources often
+leads to multiple ID formats which can be used to identify different
+data sources
+
+Description fields can be potentially be run through a document
+classification engine to create a category
+
+Description fields can often contain important meta data that was
+captured when source data information doesn't have a proper field in the
+target datastore to accept the data.
+
+Low cardinality date columns can be converted into factors to detect
+errors to do with batches Often batches have a similar number of records
+so identifying anomalies in batch count using an interquartile range can
+further detect issues to do with specific batch runs.
+
+High cardinality date columns such as transaction date can be split and
+binned to detect errors to do with end of month cut off periods
+
+Numeric columns binned into \<-0.5, \<0, 0, \<0.5, \>0.5 and then
+treated as a categorical This is to isolate issued caused by negative
+values, zero values and small fractional values which can lead to
+multiplication and division errors
+
+## ML Model
+
+Catboost is a highly efficient algorithm for training a binary
+classifier on categorical data.
+
+It eliminates the need to one hot encode your data this is helpful as
+one hot encoding on large datasets with lots of categories can often
+create a large sparse matrix which is too large for memory.
+
+As the catboost engine is not available on CRAN we'll use Python to
+carry out all of the model training.
+
+## Model interpretation
+
+shap.TreeExplainer can be used to show how well each feature contributes
+to the results This often identifies features that are able to perfectly
+isolate pass and failed results This is because failed results are
+typically clearly associated with missing / NULL data in one or two
+columns
+
+## Tech Stack
+
+As with all of the check_functions we'll take advantage of
+
+R - dbplyr as the most efficient way to express our transformation logic
+which can then be run on a local dataframe or more likely a...
+
+SQL Engine - Generally the source data will already be in a database /
+data warehouse and we'll take advantage of this engine for processing
+larger datasets
+
+Python - Catboost Machine Learning Library is better documented and
+supported by Python than it is for R

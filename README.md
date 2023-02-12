@@ -56,8 +56,10 @@ x_value
 y_value
 diff: x_value - y_value
 n: count(x) + replace_na(y_value,1), this is done so that missing data can also be accounted for
-pct
+pct: this should sum to 100% for each test / grouping (need to think about this one to make a meaningful summary. often clients want to split by tests by grouping to see if each group = 100%, however that means pct at a test level needs to be a weighted pct calculated off the grouping pct)
 acceptable_values
 top_n_detail_fields
+source: server.schema.table
+
 
 1. Groups by common non-numeric fields. This ensures join fields are unique and comparable between tables.
