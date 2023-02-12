@@ -78,9 +78,6 @@ df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')
 
 
 
-df %>% select(where(is.numeric))
-
-
 df_result <- df %>% check_diff_on_fields(ref,'value',gb='id')  
 df %>% check_diff_on_fields(ref,'value',gb=c('id','category'))  
 df %>% check_diff_on_fields(ref,'value',gb=c('category'))  
@@ -90,12 +87,8 @@ df %>% check_diff_on_fields(ref,'value',gb=c('category','id'),test_name = 'asdf'
 
 df_result %>% filter(result=='Fail')
 
-df <- tibble(id=1:5,category=c(rep('A',3),rep('B',2)),date = rep(lubridate::ymd('2023-01-01'),5),value=c(2,2,NA,NA,3)) 
 
-dynamic_filter <- function(df,conditions){
-  df %>% filter(conditions)
-}
-
+# Example of how to build a function that accepts a vector of filter criteria that can be used with dbplyr
 dynamic_filter <- function(df, conditions){
   condition_str <- paste(conditions, collapse=" & ")
   df %>% filter(!!rlang::parse_expr(condition_str))
