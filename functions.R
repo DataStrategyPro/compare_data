@@ -236,18 +236,6 @@ check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,
   return(df)  
 }
 
-
-check_diff <- function(df,ref){
-  
-}
-
-
-# table x has a list of all of the acceptable values
-# table y is compared to table x and fails if a combination is not within the acceptable values
-check_acceptable <- function(df,ref){
-  
-}
-
 mk_acceptable_value_lkp <- function(df,gb,acceptable_value_col,write=FALSE){
   df <- df %>% 
     group_by(!!!syms(gb)) %>% 
