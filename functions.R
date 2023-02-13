@@ -124,13 +124,29 @@ check_null_columns <- function(df,test_name=NULL,print_sql=FALSE,write=FALSE){
   
 }
 
-check_distinct_count <- function(df,gb=NULL,test_name=NULL,write=FALSE){
+check_distinct_count <- function(df,gb=NULL,test_name=NULL,print_sql=FALSE,write=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'distinct_count')
   }
-  df <- gb(df,gb)
+  # df <- gb(df,gb)
   
-  df <- df %>% mutate_all(~count(distinct(.))) %>% 
+  df <- df %>% 
+    mutate_all(~count(distinct(.))) 
+  # %>% ungroup()
+
+  if(is(df,'tbl_sql')){
+    if(print_sql){
+        print(sql_render(df))
+    }
+    
+    df <- df %>% collect()
+  }    
+    
+  df <- df %>% 
+    pivot_longer(everything(),names_to = 'column_name',values_to = 'n') %>%
+    mutate(pct = as.double(n) / sum(n),
+           result = 'Info',
+           result_detail = '') %>% 
     add_test_name(test_name)
 
   write_result_csv(df,test_name = test_name,write = write)
@@ -361,7 +377,7 @@ summarise_result <- function(file){
     
     return(df)
   }else{
-    print("Table doesn't include the columns result or result_detail")
+    print("***** test_name, result, result_detail, n, pct are mandatory*****")
     return()
   }
 }

@@ -57,13 +57,17 @@ df %>% check_null_columns(test_name = 'asdf')
 
 
 df %>% check_distinct_count()  
-df %>% check_distinct_count('category')  
+df %>% check_distinct_count(write = TRUE)  
+# df %>% check_distinct_count('category')  
+# 
+# df %>% check_distinct_count('category',write = TRUE)  
+# df %>% check_distinct_count(gb=c('category','id'))  
+# df %>% check_distinct_count(gb=c('category','id'),test_name = 'asdf')  
 
-df %>% check_distinct_count('category',write = TRUE)  
-df %>% check_distinct_count(gb=c('category','id'))  
-df %>% check_distinct_count(gb=c('category','id'),test_name = 'asdf')  
-
-
+df %>% group_by(category) %>% 
+  mutate_all(~count(distinct(.))) %>% 
+  ungroup() %>% 
+  pivot_longer(-category,names_to = 'column_name',values_to = 'n')
 
 df %>% check_stats()  
 df %>% check_stats('category')  
@@ -72,6 +76,7 @@ df %>% check_stats(gb=c('category','id'),write = TRUE)
 df %>% check_stats(gb=c('category','id'),test_name = 'asdf')  
 
 
+source('functions.R')
 df %>% check_zero_balance('value')  
 df %>% check_zero_balance('value','category')  
 df %>% check_zero_balance('value','category',write = TRUE)  
@@ -104,8 +109,5 @@ mpg %>% dynamic_filter(c("year==1999","cyl==4"))
 conditions = c("category=='A'","id<=2")
 paste(conditions, collapse=" & ")
 
-df_result
-summarise_result(df_result)
-source('functions.R')
-summarise_results('output/2023-02-13/')
+summarise_results('output/2023-02-13/') %>% as.data.frame()
 
