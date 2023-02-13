@@ -29,16 +29,20 @@ gb <- function(df,gb=NULL){
 }
 
 
-write_result_csv <- function(df,test_name,limit=1000,write=FALSE){
+write_result_csv <- function(df,test_name,folder_name=paste0('output/',lubridate::today(),'/'),limit=1000,write=FALSE){
   if(write){
+    df <- df %>% ungroup()
+    
     df_rows <- df %>% count() %>% pull(n)
+    
     if(df_rows > limit){
       print(paste('Writting',limit,'rows out of',df_rows,'. To return more rows adjust the limit'))
     }
+    df <- df %>% head(limit)
     if(is(df,'tbl_sql')){
-      df <- df %>% head(limit) %>%  collect()
+      df <- df %>% collect()
     }
-    folder = paste0('output/',lubridate::today(),'/')
+    folder = folder_name
     fs::dir_create(folder)
     df %>% write_csv(paste0(folder,test_name,'.csv'))
   }
@@ -63,21 +67,26 @@ get_distinct_col_values <- function(df,col){
 }
 
 # Check Functions ----------------------------------------------------------
-check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='white_space'){
+check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='white_space',write=FALSE){
   test_name <- paste(table_name,test_name,sep = '_')
   
-  df %>% 
+  df <- df %>% 
     select_if(is.character) %>% 
     names() %>% 
     map_df(~get_distinct_col_values(df,.)) %>% 
     group_by(result,result_detail,column_name) %>% 
     summarise(n=sum(n)) %>% 
     mutate(pct = n / sum(n)) %>% 
-    add_test_name(test_name)
+    add_test_name(test_name) %>% 
+    ungroup()
+
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
 }
 
 
-check_null_columns <- function(df,test_name=NULL,print_sql=FALSE){
+check_null_columns <- function(df,test_name=NULL,print_sql=FALSE,write=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'null_count')
   }
@@ -96,7 +105,7 @@ check_null_columns <- function(df,test_name=NULL,print_sql=FALSE){
     df <- df %>% collect()
   }    
   
-  df %>% 
+  df <- df %>% 
     pivot_longer(everything(),names_to = 'column_name',values_to = 'value') %>% 
     mutate(pct = as.double(value) / row_count,
            # this n shows the number of items in that column which meet the criteria. Consider dropping
@@ -108,44 +117,61 @@ check_null_columns <- function(df,test_name=NULL,print_sql=FALSE){
            pct = n / sum(n)
     ) %>% 
     add_test_name(test_name)
+  
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
+  
 }
 
-check_distinct_count <- function(df,gb=NULL,test_name=NULL){
+check_distinct_count <- function(df,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'distinct_count')
   }
   df <- gb(df,gb)
   
-  df %>% mutate_all(~count(distinct(.))) %>% 
+  df <- df %>% mutate_all(~count(distinct(.))) %>% 
     add_test_name(test_name)
+
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
 }
 
 # Reviews the sum, min, max, mean, median, count for fields
-check_stats <- function(df,gb=NULL,test_name=NULL){
+check_stats <- function(df,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'stats')
   }
   df <- gb(df,gb)
   
-  df %>% summarise_if(is.numeric,list(min=min,max=max,avg=mean,med=median,sum=sum)) %>% 
+  df <- df %>% summarise_if(is.numeric,list(min=min,max=max,avg=mean,med=median,sum=sum)) %>% 
     add_test_name(test_name)
+  
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
 }
 
 # In double entry book keeping accounts should balance to zero when grouped by 
 # Chart of Account Code and Date
-check_zero_balance <- function(df,value_col,gb=NULL,test_name=NULL){
+check_zero_balance <- function(df,value_col,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'zero_balance')
   }
   df <- gb(df,gb)
   
-  df %>% 
+  df <- df %>% 
     summarise(balance = sum(.data[[value_col]],na.rm=TRUE)) %>% 
     ungroup() %>% 
     mutate(
       result = case_when(balance == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(balance == 0 ~ '', TRUE ~ 'Does not balance to zero')) %>% 
     add_test_name(test_name)
+  
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
 }
 
 # df is the table you want to check against the ref table to check for completeness
@@ -156,7 +182,7 @@ check_complete <- function(df,ref){
 
 # df is the table you want to check against the ref table to check for variance on a specified numeric field
 # numeric field from table df and ref should be equal when compared on a common aggregate
-check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL){
+check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'diff_on_fields')
   }
@@ -169,7 +195,7 @@ check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,
     group_by(!!!syms(gb)) %>% 
     summarise(ref_value = sum(!!sym(df_value_col),na.rm = TRUE),ref_n = n())
   
-  df %>% 
+  df <- df %>% 
     full_join(ref,by = gb,copy = TRUE) %>% 
     mutate(
       diff = df_value - ref_value,
@@ -187,6 +213,10 @@ check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,
     ) %>%
     select(-df_n,-ref_n) %>% 
     add_test_name(test_name)  
+  
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
 }
 
 
@@ -201,17 +231,19 @@ check_acceptable <- function(df,ref){
   
 }
 
-mk_acceptable_value_lkp <- function(df,gb,acceptable_value_col){
+mk_acceptable_value_lkp <- function(df,gb,acceptable_value_col,write=FALSE){
   df <- df %>% 
     group_by(!!!syms(gb)) %>% 
     mutate("valid_{acceptable_value_col}s" := str_c(!!sym(acceptable_value_col),collapse = ',')) %>% 
     select(!!!syms(gb),matches(glue("valid_{acceptable_Value_col}s"))) %>% 
     distinct()
+
+  write_result_csv(df,test_name = test_name,write = write)
   
-  return(df)
+  return(df)  
 }
 
-check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_value_col=NA,print_sql=FALSE,subset_by_ref=FALSE){
+check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_value_col=NA,print_sql=FALSE,subset_by_ref=FALSE,write=FALSE){
   set <- intersect(names(dbf),names(ref))
   print(glue("Tables joined on {str_c(set,collapse=',')}"))
   ref_cols <- names(ref)
@@ -279,11 +311,14 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
     df_acceptable_value_lkp <- mk_acceptable_value_lkp(ref_for_acceptable_values,gb,acceptable_value_col)
     df <- df %>% left_join(df_acceptable_value_lkp,by=gb)
   }
-  return(df)
+  
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
 }
 
 
-get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALSE){
+get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
   # Get the top n records for each group
   df <- df %>% 
     group_by(result,result_detail) %>% 
@@ -306,11 +341,15 @@ get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALS
     print(sql)
   }
   
-  db %>% collect() %>% return()
+  df <- db %>% collect() 
+  
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
 }
 
 summarise_result <- function(df){
-  df %>% 
+  df <- df %>% 
     group_by(result,result_detail) %>% 
     summarise_if(is.numeric,sum,na.rm=TRUE) %>% 
     arrange(desc(n))

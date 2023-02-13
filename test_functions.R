@@ -47,19 +47,19 @@ db_mpg %>%
 db_mpg %>% count()
 
 
-db_mpg %>% check_white_space()
-
-
-df %>% summarise_all(sum,na.rm=TRUE) %>% 
-  pivot_longer(cols = everything(),names_to = 'column_name',values_to = 'value')
+db_mpg %>% check_white_space(write = FALSE)
+check_white_space(db_mpg,write = TRUE)
 
 
 df %>% check_null_columns() 
+df %>% check_null_columns(write = TRUE) 
 df %>% check_null_columns(test_name = 'asdf')
 
 
 df %>% check_distinct_count()  
 df %>% check_distinct_count('category')  
+
+df %>% check_distinct_count('category',write = TRUE)  
 df %>% check_distinct_count(gb=c('category','id'))  
 df %>% check_distinct_count(gb=c('category','id'),test_name = 'asdf')  
 
@@ -68,11 +68,14 @@ df %>% check_distinct_count(gb=c('category','id'),test_name = 'asdf')
 df %>% check_stats()  
 df %>% check_stats('category')  
 df %>% check_stats(gb=c('category','id'))  
+df %>% check_stats(gb=c('category','id'),write = TRUE)  
 df %>% check_stats(gb=c('category','id'),test_name = 'asdf')  
 
 
 df %>% check_zero_balance('value')  
 df %>% check_zero_balance('value','category')  
+df %>% check_zero_balance('value','category',write = TRUE)  
+
 df %>% check_zero_balance('value',gb=c('category','id'))  
 df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')  
 
@@ -80,6 +83,7 @@ df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')
 
 df_result <- df %>% check_diff_on_fields(ref,'value',gb='id')  
 df %>% check_diff_on_fields(ref,'value',gb=c('id','category'))  
+df %>% check_diff_on_fields(ref,'value',gb=c('id','category'),write = TRUE)  
 df %>% check_diff_on_fields(ref,'value',gb=c('category'))  
 df %>% check_diff_on_fields(ref,'value',gb=c('category','id'),test_name = 'asdf')  
 
