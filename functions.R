@@ -162,9 +162,10 @@ check_zero_balance <- function(df,value_col,gb=NULL,test_name=NULL,write=FALSE){
   df <- gb(df,gb)
   
   df <- df %>% 
-    summarise(balance = sum(.data[[value_col]],na.rm=TRUE)) %>% 
+    summarise(balance = sum(.data[[value_col]],na.rm=TRUE),n=n()) %>% 
     ungroup() %>% 
     mutate(
+      pct = as.double(n)/sum(n),
       result = case_when(balance == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(balance == 0 ~ '', TRUE ~ 'Does not balance to zero')) %>% 
     add_test_name(test_name)
