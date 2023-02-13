@@ -146,7 +146,7 @@ check_distinct_count <- function(df,gb=NULL,test_name=NULL,print_sql=FALSE,write
     pivot_longer(everything(),names_to = 'column_name',values_to = 'n') %>%
     mutate(pct = as.double(n) / sum(n),
            result = 'Info',
-           result_detail = '') %>% 
+           result_detail = column_name) %>% 
     add_test_name(test_name)
 
   write_result_csv(df,test_name = test_name,write = write)
