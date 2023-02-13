@@ -11,16 +11,16 @@ editor:
 The check functions in this library typically check records to see if
 they are
 
--    null
+-   null
 
--    missing
+-   missing
 
--    different
+-   different
 
--    malformed (eg contains white space or fails to match a regex
+-   malformed (eg contains white space or fails to match a regex
     pattern)
 
--    acceptable (within a table of acceptable values)
+-   acceptable (within a table of acceptable values)
 
 Where specified these checks will create a results table where result is
 one of 'Pass','Fail','Warning','Info'
