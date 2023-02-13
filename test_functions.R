@@ -103,3 +103,9 @@ mpg %>% dynamic_filter(c("year==1999","cyl==4"))
 
 conditions = c("category=='A'","id<=2")
 paste(conditions, collapse=" & ")
+
+df_result
+summarise_result(df_result)
+source('functions.R')
+summarise_results('output/2023-02-13/')
+

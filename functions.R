@@ -348,15 +348,25 @@ get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALS
   return(df)  
 }
 
-summarise_result <- function(df){
-  df <- df %>% 
-    group_by(result,result_detail) %>% 
-    summarise_if(is.numeric,sum,na.rm=TRUE) %>% 
-    arrange(desc(n))
+summarise_result <- function(file){
+  print(file)
+  df <- read_csv(file)
+  if(all(c('test_name','result','result_detail','n') %in% names(df))){
+    df <- df %>% 
+      janitor::clean_names() %>% 
+      group_by(test_name,result,result_detail) %>% 
+      summarise_if(is.numeric,sum,na.rm=TRUE) %>% 
+      arrange(desc(n))
+    
+    return(df)
+  }else{
+    print("Table doesn't include the columns result or result_detail")
+    return()
+  }
 }
 
 # Loop through a folder of result output files
 summarise_results <- function(folder){
   fs::dir_ls(folder) %>% 
-    map_dfr(~summarise_result(read_csv(.)))
+    map_dfr(summarise_result)
 }
