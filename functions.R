@@ -356,7 +356,7 @@ summarise_result <- function(file){
     df <- df %>% 
       janitor::clean_names() %>% 
       group_by(test_name,result,result_detail) %>% 
-      summarise_if(is.numeric,sum,na.rm=TRUE) %>% 
+      summarise_at(vars(n,pct),sum,na.rm=TRUE) %>% 
       arrange(desc(n))
     
     return(df)
