@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Efficient Validation of Database Tables
 
 When data travels through a pipeline there is always risk for data
