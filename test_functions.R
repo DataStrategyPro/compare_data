@@ -5,11 +5,6 @@ source('functions.R')
 con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
 copy_to(con, mpg)
 
-## map_table_columns----
-
-## check_unique(df,select)-------
-# Are the fields used for joining unique? 
-
 
 # Setup test data ---------------------------------------------------------
 
@@ -45,6 +40,13 @@ db_mpg %>%
   rows_append(df_ws,in_place = TRUE,copy = TRUE) 
 
 db_mpg %>% count()
+
+# Are the fields used for joining unique? 
+tibble(ID=c(1:5,4,5), combined_key_part = 1:7) %>% 
+  check_unique_keys('ID')
+
+tibble(ID=c(1:5,4,5), combined_key_part = 1:7) %>% 
+  check_unique_keys(c('ID','combined_key_part'))
 
 
 db_mpg %>% check_white_space(write = FALSE)

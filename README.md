@@ -1,8 +1,21 @@
 # Compare Tables
 
-Enable non-technical users to configure tests
-Reduce the amount of technical resources required to setup tests
-Reduce the time it takes to investigate discrepancies
+This library helps to validate data for data migration projects. 
+
+It can carry out the following checks on either database or local tables. Often database tables compared to a local reference table. 
+
+check_unique_key
+check_white_space
+check_null_columns
+check_distinct_count
+check_stats
+check_zero_balance
+check_complete
+check_diff
+
+It enable non-technical users to configure tests via spreadsheets and reference tables
+
+Reduce the amount of technical resources required to setup tests by generating all of the SQL to test and investigate. discrepancies
 
 ## What it does
 A set of tools to compare Local and SQL Tables to validate data is correct and free from corruption at the end of a data pipeline. 
