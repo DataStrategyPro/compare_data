@@ -67,6 +67,28 @@ get_distinct_col_values <- function(df,col){
 }
 
 # Check Functions ----------------------------------------------------------
+# check to see if keys / combined keys are unique
+check_unique_keys <- function(df,keys,test_name=NULL,write=FALSE,...){
+  if(is.null(test_name)){
+    test_name <- mk_test_name(df,'unique_keys')
+  }
+
+  df <- df %>% 
+    count(!!!syms(keys))  %>% 
+    mutate(
+      result = case_when(n==1 ~ 'Pass',.default = 'Fail'),
+      result_detail = case_when(n==1 ~ '',.default = paste(!!!syms(keys),'has',n,'duplicates'))
+    ) %>% 
+    count(result,result_detail) %>% 
+    mutate(pct = n/sum(n)) %>% 
+    add_test_name(test_name)
+  
+  write_result_csv(df,test_name = test_name,write = write)
+  
+  return(df)  
+}
+
+
 check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='white_space',write=FALSE){
   test_name <- paste(table_name,test_name,sep = '_')
   
@@ -322,9 +344,17 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
   return(df)  
 }
 
+# return a sample of n records for the underlying data for each group
+# This function accepts dataframe and a lookup table typically a database table
+# The dataframe typically a summary of the data and contains a 1 to many relationship with the lookup table.
+
+# Often drill downs into summary data are required to diagnose issues
+# For example an ID of a failed record can be used to lookup a system
+# However ID's are not included in summaries because they would return too many rows
+# Therefore a sample of IDs for a group of failed records can be useful
+
 
 get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
-  # Get the top n records for each group
   df <- df %>% 
     group_by(result,result_detail) %>% 
     filter(row_number()<=n) %>% 
