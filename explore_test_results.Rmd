@@ -23,7 +23,7 @@ df_result_summary <- read_csv('output/df_result_summary.csv')
 reactableOutput('summary_tbl')
 
 output$summary_tbl <- reactable::renderReactable({
-  reactable(df_result_summary, highlight = TRUE, selection='single', onClick = 'select',
+  reactable(df_result_summary, highlight = TRUE, selection='single', onClick = 'select',filterable = TRUE,
             groupBy = c('test_name','result'),columns = list(
               n = colDef(aggregate = 'sum'),
               pct = colDef(aggregate = 'sum', format = colFormat(percent = TRUE))

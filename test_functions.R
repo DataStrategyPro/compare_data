@@ -22,14 +22,9 @@ ref <- tibble(id=2:6,category=c(rep('A',3),rep('B',2)),value=c(2,2,NA,NA,3))
 copy_to(con,ref,overwrite = TRUE)
 db_ref <- tbl(con,'ref')
 
-df %>% select_if(is.character)
 
+# Setup white space data --------------------------------------------------
 
-df %>% write_result_csv('test')
-
-df %>% group_by(category) %>% 
-  mk_test_name()
-mk_test_name(df)
 
 df_ws <- mpg %>% head(10) %>% 
   mutate_if(is.character,~str_c(.,' ')) 
