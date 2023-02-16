@@ -5,3 +5,4 @@
 output/
 catboost_info/
 log/
+.html
