@@ -1,0 +1,51 @@
+---
+title: "Explore Results"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(reactable)
+library(crosstalk)
+source('functions.R')
+```
+
+
+
+Column 
+-----------------------------------------------------------------------
+
+### Summary
+
+```{r}
+df_result_summary <- read_csv('output/df_result_summary.csv')
+reactableOutput('summary_tbl')
+
+output$summary_tbl <- reactable::renderReactable({
+  reactable(df_result_summary, highlight = TRUE, selection='single', onClick = 'select',filterable = TRUE,
+            groupBy = c('test_name','result'),columns = list(
+              n = colDef(aggregate = 'sum'),
+              pct = colDef(aggregate = 'sum', format = colFormat(percent = TRUE))
+  ))
+})
+
+```
+
+### Detail
+
+```{r}
+renderUI({
+  row <- getReactableState('summary_tbl','selected')
+  test_name <- df_result_summary[row,]$test_name
+  chr_result_detail <- df_result_summary[row,]$result_detail
+  if(length(test_name) > 0){
+    detail_tbl <- read_csv(paste0('output/2023-02-13/',test_name,'.csv'))
+    dt <- detail_tbl %>% 
+      filter(result_detail == chr_result_detail)
+    reactable(dt)
+  }
+})
+
+```
+
