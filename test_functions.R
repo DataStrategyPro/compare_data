@@ -90,9 +90,16 @@ df %>%
   mutate(test_name = paste(!!!syms(c('id','category')))) %>% 
   mutate(test = replace(test_name,' ','_'))
 
-df_result <- df %>% check_diff(ref,'value',gb='id')  
+df
+df_result
+df_result <- df %>% check_diff(ref,'value',gb='category')  
 
-df %>% check_diff(ref,'value',gb=c('id','category'))  
+get_group_samples(df_result,df,n = 10,add_cols = c('id'))
+get_group_samples(df_result,df,all_cols = TRUE)
+get_group_samples(df_result,df,all_cols = TRUE)
+get_group_samples(df_result,df,all_cols = TRUE)
+
+df %>% check_diff(ref,'value',gb=c('category'))  
 df %>% check_diff(ref,'value',gb=c('id','category'),write = TRUE)  
 df %>% check_diff(ref,'value',gb=c('category'))  
 df %>% check_diff(ref,'value',gb=c('category','id'),test_name = 'asdf')  

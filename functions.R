@@ -355,7 +355,7 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
 # Therefore a sample of IDs for a group of failed records can be useful
 
 
-get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
+get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
   df <- df %>% 
     group_by(result,result_detail) %>% 
     filter(row_number()<=n) %>% 
