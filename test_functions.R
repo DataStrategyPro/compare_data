@@ -44,7 +44,8 @@ tibble(ID=c(1:5,4,5), combined_key_part = 1:7) %>%
   check_unique_keys(c('ID','combined_key_part'))
 
 
-db_mpg %>% check_white_space(write = FALSE)
+db_mpg %>% check_white_space(write = FALSE) %>% 
+  summarise_if(is.numeric,sum)
 check_white_space(db_mpg,write = TRUE)
 
 

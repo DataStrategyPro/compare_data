@@ -98,9 +98,9 @@ check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='w
     map_df(~get_distinct_col_values(df,.)) %>% 
     group_by(result,result_detail,column_name) %>% 
     summarise(n=sum(n)) %>% 
+    ungroup() %>% 
     mutate(pct = n / sum(n)) %>% 
-    add_test_name(test_name) %>% 
-    ungroup()
+    add_test_name(test_name) 
 
   write_result_csv(df,test_name = test_name,write = write)
   
