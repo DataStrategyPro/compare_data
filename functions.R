@@ -221,7 +221,7 @@ check_complete <- function(df,ref){
 
 # df is the table you want to check against the ref table to check for variance on a specified numeric field
 # numeric field from table df and ref should be equal when compared on a common aggregate
-check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE){
+check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'diff_on_fields')
   }
