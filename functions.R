@@ -108,8 +108,8 @@ check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='w
 }
 
 
-check_null_columns <- function(df,test_name=NULL,print_sql=FALSE,write=FALSE){
-  if(is.null(test_name)){
+check_null_columns <- function(df, test_name = NULL, print_sql = FALSE, write = FALSE) {
+  if(is.null(test_name)) {
     test_name <- mk_test_name(df,'null_count')
   }
 
