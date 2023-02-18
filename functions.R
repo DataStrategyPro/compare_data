@@ -11,7 +11,7 @@ mk_test_name <- function(df,test_name='test',table_name=NULL){
   if(is.null(table_name)){
     table_name <- deparse(substitute(df))
   }
-  test_name = str_flatten(c(table_name,test_name,group_vars(df)),collapse = '_',na.rm = TRUE)
+  test_name = paste(c(table_name,test_name),collapse = '_')
   return(test_name)
 }
 
@@ -223,7 +223,7 @@ check_complete <- function(df,ref){
 # numeric field from table df and ref should be equal when compared on a common aggregate
 check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
-    test_name <- mk_test_name(df,'diff_on_fields')
+    test_name <- mk_test_name(df,'diff',gb)
   }
   
   df <- df %>% 
@@ -252,7 +252,8 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
       )
     ) %>%
     select(-df_n,-ref_n) %>% 
-    add_test_name(test_name)  
+    add_test_name(test_name)  %>% 
+    mutate(test_name = paste(test_name,!!!syms(gb)))
   
   write_result_csv(df,test_name = test_name,write = write)
   

@@ -67,6 +67,7 @@ df %>% group_by(category) %>%
   ungroup() %>% 
   pivot_longer(-category,names_to = 'column_name',values_to = 'n')
 
+
 df %>% check_stats()  
 df %>% check_stats('category')  
 df %>% check_stats(gb=c('category','id'))  
@@ -83,8 +84,14 @@ df %>% check_zero_balance('value',gb=c('category','id'))
 df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')  
 
 
+mk_test_name(df)
+
+df %>% 
+  mutate(test_name = paste(!!!syms(c('id','category')))) %>% 
+  mutate(test = replace(test_name,' ','_'))
 
 df_result <- df %>% check_diff(ref,'value',gb='id')  
+
 df %>% check_diff(ref,'value',gb=c('id','category'))  
 df %>% check_diff(ref,'value',gb=c('id','category'),write = TRUE)  
 df %>% check_diff(ref,'value',gb=c('category'))  
