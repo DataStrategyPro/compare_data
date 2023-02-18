@@ -121,5 +121,12 @@ mpg %>% dynamic_filter(c("year==1999","cyl==4"))
 conditions = c("category=='A'","id<=2")
 paste(conditions, collapse=" & ")
 
-summarise_results('output/2023-02-13/') %>% as.data.frame()
+df_summarised <- summarise_results('output/2023-02-18/')
+df_summarised %>% as.data.frame()
+df_summarised %>% write_csv('output/df_result_summary.csv')
 
+df_summarised %>% 
+  group_by(test_name,result) %>% 
+  summarise_if(is.numeric,sum) %>% 
+  pivot_wider(id_cols = test_name,names_from = result,values_from = pct) %>% 
+  select(test_name,Pass,Fail,Info,Warning)

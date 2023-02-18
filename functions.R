@@ -223,7 +223,7 @@ check_complete <- function(df,ref){
 # numeric field from table df and ref should be equal when compared on a common aggregate
 check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
-    test_name <- mk_test_name(df,'diff',gb)
+    test_name <- mk_test_name(df,'diff')
   }
   
   df <- df %>% 
@@ -236,6 +236,7 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
   
   df <- df %>% 
     full_join(ref,by = gb,copy = TRUE) %>% 
+    ungroup() %>% 
     mutate(
       diff = df_value - ref_value,
       n = (ifelse(is.na(df_n),0,df_n) + ifelse(is.na(ref_n),0,ref_n))/2,
@@ -251,8 +252,8 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
       )
     ) %>%
     select(-df_n,-ref_n) %>% 
-    add_test_name(test_name)  %>% 
-    mutate(test_name = paste(test_name,!!!syms(gb)))
+    add_test_name(test_name)#  %>%
+    # mutate(test_name = paste(test_name,!!!syms(gb)))
   
   write_result_csv(df,test_name = test_name,write = write)
   
