@@ -236,6 +236,7 @@ check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,
   
   df <- df %>% 
     full_join(ref,by = gb,copy = TRUE) %>% 
+    ungroup() %>% 
     mutate(
       diff = df_value - ref_value,
       n = (ifelse(is.na(df_n),0,df_n) + ifelse(is.na(ref_n),0,ref_n))/2,

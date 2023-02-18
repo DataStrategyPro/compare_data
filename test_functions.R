@@ -84,11 +84,11 @@ df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')
 
 
 
-df_result <- df %>% check_diff_on_fields(ref,'value',gb='id')  
-df %>% check_diff_on_fields(ref,'value',gb=c('id','category'))  
-df %>% check_diff_on_fields(ref,'value',gb=c('id','category'),write = TRUE)  
-df %>% check_diff_on_fields(ref,'value',gb=c('category'))  
-df %>% check_diff_on_fields(ref,'value',gb=c('category','id'),test_name = 'asdf')  
+df_result <- df %>% check_diff(ref,'value',gb='id')  
+df %>% check_diff(ref,'value',gb=c('id','category'))  
+df %>% check_diff(ref,'value',gb=c('id','category'),write = TRUE)  
+df %>% check_diff(ref,'value',gb=c('category'))  
+df %>% check_diff(ref,'value',gb=c('category','id'),test_name = 'asdf')  
 
 
 
