@@ -19,6 +19,7 @@ Column
 ### Summary
 
 ```{r}
+
 df_result_summary <- read_csv('output/df_result_summary.csv')
 reactableOutput('summary_tbl')
 
@@ -38,9 +39,9 @@ output$summary_tbl <- reactable::renderReactable({
 renderUI({
   row <- getReactableState('summary_tbl','selected')
   test_name <- df_result_summary[row,]$test_name
-  chr_result_detail <- df_result_summary[row,]$result_detail
+  chr_result_detail <- replace_na(df_result_summary[row,]$result_detail,'') 
   if(length(test_name) > 0){
-    detail_tbl <- read_csv(paste0('output/2023-02-13/',test_name,'.csv'))
+    detail_tbl <- read_csv(paste0('output/2023-02-18/',test_name,'.csv'),na = 'result_detail')
     dt <- detail_tbl %>% 
       filter(result_detail == chr_result_detail)
     reactable(dt)
