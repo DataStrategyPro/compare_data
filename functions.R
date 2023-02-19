@@ -11,7 +11,7 @@ mk_test_name <- function(df,test_name='test',table_name=NULL){
   if(is.null(table_name)){
     table_name <- deparse(substitute(df))
   }
-  test_name = str_flatten(c(table_name,test_name,group_vars(df)),collapse = '_',na.rm = TRUE)
+  test_name = paste(c(table_name,test_name),collapse = '_')
   return(test_name)
 }
 
@@ -98,9 +98,9 @@ check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='w
     map_df(~get_distinct_col_values(df,.)) %>% 
     group_by(result,result_detail,column_name) %>% 
     summarise(n=sum(n)) %>% 
+    ungroup() %>% 
     mutate(pct = n / sum(n)) %>% 
-    add_test_name(test_name) %>% 
-    ungroup()
+    add_test_name(test_name) 
 
   write_result_csv(df,test_name = test_name,write = write)
   
@@ -108,8 +108,8 @@ check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='w
 }
 
 
-check_null_columns <- function(df,test_name=NULL,print_sql=FALSE,write=FALSE){
-  if(is.null(test_name)){
+check_null_columns <- function(df, test_name = NULL, print_sql = FALSE, write = FALSE) {
+  if(is.null(test_name)) {
     test_name <- mk_test_name(df,'null_count')
   }
 
@@ -221,9 +221,9 @@ check_complete <- function(df,ref){
 
 # df is the table you want to check against the ref table to check for variance on a specified numeric field
 # numeric field from table df and ref should be equal when compared on a common aggregate
-check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE){
+check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE){
   if(is.null(test_name)){
-    test_name <- mk_test_name(df,'diff_on_fields')
+    test_name <- mk_test_name(df,'diff')
   }
   
   df <- df %>% 
@@ -236,6 +236,7 @@ check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,
   
   df <- df %>% 
     full_join(ref,by = gb,copy = TRUE) %>% 
+    ungroup() %>% 
     mutate(
       diff = df_value - ref_value,
       n = (ifelse(is.na(df_n),0,df_n) + ifelse(is.na(ref_n),0,ref_n))/2,
@@ -251,7 +252,8 @@ check_diff_on_fields <- function(df,ref,df_value_col,ref_value_col=df_value_col,
       )
     ) %>%
     select(-df_n,-ref_n) %>% 
-    add_test_name(test_name)  
+    add_test_name(test_name)#  %>%
+    # mutate(test_name = paste(test_name,!!!syms(gb)))
   
   write_result_csv(df,test_name = test_name,write = write)
   
@@ -354,7 +356,7 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
 # Therefore a sample of IDs for a group of failed records can be useful
 
 
-get_group_samples <- function(df,lkp,n,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
+get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
   df <- df %>% 
     group_by(result,result_detail) %>% 
     filter(row_number()<=n) %>% 

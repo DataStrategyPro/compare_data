@@ -1,0 +1,104 @@
+---
+title: "Explore Results"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(reactable)
+library(crosstalk)
+source('functions.R')
+```
+
+
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Result Summary
+
+```{r}
+df_result_summary <- read_csv('output/df_result_summary.csv')
+df_result_summary <- df_result_summary %>% 
+  group_by(test_name,result) %>% 
+  summarise_if(is.numeric,sum) %>% 
+  pivot_wider(id_cols = test_name,names_from = result,values_from = pct) %>% 
+  select(test_name,Pass,Fail,Info,Warning)
+
+reactableOutput('summary_tbl')
+
+output$summary_tbl <- reactable::renderReactable({
+  reactable(df_result_summary, highlight = TRUE, selection='single', onClick = 'select',filterable = FALSE,
+            compact = TRUE,
+            # width = 500,
+            columns = list(
+              test_name = colDef(minWidth = 170),
+              Pass = colDef(format = colFormat(percent = TRUE,digits = 2)),
+              Fail = colDef(format = colFormat(percent = TRUE,digits = 2)),
+              Info = colDef(format = colFormat(percent = TRUE,digits = 2)),
+              Warning = colDef(format = colFormat(percent = TRUE,digits = 2))
+            )
+  )
+})
+
+```
+
+Column {data-width=1200}
+-----------------------------------------------------------------------
+
+
+### Detail
+
+```{r}
+renderUI({
+  row <- getReactableState('summary_tbl','selected')
+  test_name <- df_result_summary[row,]$test_name
+  chr_result_detail <- replace_na(df_result_summary[row,]$result_detail,'') 
+  if(length(test_name) > 0){
+    detail_tbl <- read_csv(paste0('output/2023-02-18/',test_name,'.csv'),na = 'result_detail')
+    detail_tbl <- detail_tbl %>% select(test_name,result,result_detail,n,pct,everything())
+    
+    reactable(detail_tbl,
+              highlight = TRUE, 
+              selection = 'single', 
+              onClick = 'select',
+              filterable = TRUE,
+              defaultPageSize = 50,
+              resizable = TRUE,
+              defaultColDef = colDef(footerStyle = list(fontWeight = "bold")),
+              columns = list(
+                test_name = colDef(footer = "Total"),
+                result = colDef(width = 100),
+                result_detail = colDef(minWidth = 400),
+                n = colDef(format = colFormat(digits = 2),width = 100,
+                  footer = JS("function(column, state) {
+                              let total = 0
+                              state.sortedData.forEach(function(row) {
+                                total += row[column.id]
+                              })
+                              return total.toFixed(2)
+                            }")
+                ),
+                pct = colDef(format = colFormat(percent = TRUE, digits = 2),width = 100, 
+                  footer = JS("function(column, state) {
+                              let total = 0
+                              state.sortedData.forEach(function(row) {
+                                total += row[column.id]
+                              })
+                              return (total * 100).toFixed(2) + '%'
+                            }")
+                )
+              )
+          )
+  }
+})
+
+```
+
+### Details from DB
+
+```{r}
+
+```
+

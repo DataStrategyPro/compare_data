@@ -44,7 +44,8 @@ tibble(ID=c(1:5,4,5), combined_key_part = 1:7) %>%
   check_unique_keys(c('ID','combined_key_part'))
 
 
-db_mpg %>% check_white_space(write = FALSE)
+db_mpg %>% check_white_space(write = FALSE) %>% 
+  summarise_if(is.numeric,sum)
 check_white_space(db_mpg,write = TRUE)
 
 
@@ -66,6 +67,7 @@ df %>% group_by(category) %>%
   ungroup() %>% 
   pivot_longer(-category,names_to = 'column_name',values_to = 'n')
 
+
 df %>% check_stats()  
 df %>% check_stats('category')  
 df %>% check_stats(gb=c('category','id'))  
@@ -82,12 +84,25 @@ df %>% check_zero_balance('value',gb=c('category','id'))
 df %>% check_zero_balance('value',gb=c('category','id'),test_name = 'asdf')  
 
 
+mk_test_name(df)
 
-df_result <- df %>% check_diff_on_fields(ref,'value',gb='id')  
-df %>% check_diff_on_fields(ref,'value',gb=c('id','category'))  
-df %>% check_diff_on_fields(ref,'value',gb=c('id','category'),write = TRUE)  
-df %>% check_diff_on_fields(ref,'value',gb=c('category'))  
-df %>% check_diff_on_fields(ref,'value',gb=c('category','id'),test_name = 'asdf')  
+df %>% 
+  mutate(test_name = paste(!!!syms(c('id','category')))) %>% 
+  mutate(test = replace(test_name,' ','_'))
+
+df
+df_result
+df_result <- df %>% check_diff(ref,'value',gb='category')  
+
+get_group_samples(df_result,df,n = 10,add_cols = c('id'))
+get_group_samples(df_result,df,all_cols = TRUE)
+get_group_samples(df_result,df,all_cols = TRUE)
+get_group_samples(df_result,df,all_cols = TRUE)
+
+df %>% check_diff(ref,'value',gb=c('category'))  
+df %>% check_diff(ref,'value',gb=c('id','category'),write = TRUE)  
+df %>% check_diff(ref,'value',gb=c('category'))  
+df %>% check_diff(ref,'value',gb=c('category','id'),test_name = 'asdf')  
 
 
 
@@ -106,5 +121,12 @@ mpg %>% dynamic_filter(c("year==1999","cyl==4"))
 conditions = c("category=='A'","id<=2")
 paste(conditions, collapse=" & ")
 
-summarise_results('output/2023-02-13/') %>% as.data.frame()
+df_summarised <- summarise_results('output/2023-02-18/')
+df_summarised %>% as.data.frame()
+df_summarised %>% write_csv('output/df_result_summary.csv')
 
+df_summarised %>% 
+  group_by(test_name,result) %>% 
+  summarise_if(is.numeric,sum) %>% 
+  pivot_wider(id_cols = test_name,names_from = result,values_from = pct) %>% 
+  select(test_name,Pass,Fail,Info,Warning)
