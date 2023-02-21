@@ -443,3 +443,46 @@ consolidate_results <- function(files,rename_list=NULL){
   
   return(df)
 }
+
+display_results <- function(df_consolidated){
+  df_summary <- df_consolidated %>% 
+    select(summary) %>% 
+    unnest(summary)
+  
+  rt <- reactable(df_summary
+                  , highlight = TRUE
+                  # , selection='single'
+                  # , onClick = 'select'
+                  , filterable = FALSE
+                  , compact = TRUE
+                  #, width = 500
+                  , columns = list(
+                    test_name = colDef(minWidth = 170),
+                    Pass = colDef(format = colFormat(percent = TRUE,digits = 2)),
+                    Fail = colDef(format = colFormat(percent = TRUE,digits = 2)),
+                    Info = colDef(format = colFormat(percent = TRUE,digits = 2)),
+                    Warning = colDef(format = colFormat(percent = TRUE,digits = 2))
+                  )
+                  ,details = function(index){
+                    df_detail <- df_consolidated[index,]$data[[1]]
+                    htmltools::div(
+                      htmltools::h5("Test Description"),
+                      reactable(df_detail,
+                                highlight = TRUE, 
+                                # selection = 'single', 
+                                # onClick = 'select',
+                                filterable = TRUE,
+                                defaultPageSize = 50,
+                                resizable = TRUE
+                                # Commenting out because column always needs to be there
+                                # columns = list(
+                                #   pct = colDef(format = colFormat(percent = TRUE,digits = 2))
+                                #   
+                                # )
+                      )
+                      
+                    )
+                  }
+  )
+  return(rt)
+}

@@ -59,7 +59,5 @@ df_summarised %>% write_csv('output/df_result_summary.csv')
 data <- fs::dir_ls('output/2023-02-18/') %>% 
   consolidate_results()
 
-data %>% 
-  mutate(summary = map(data,summarise_result,file)) %>% 
-  unnest(summary)
+data %>% display_results()
 
