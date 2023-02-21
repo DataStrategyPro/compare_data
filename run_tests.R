@@ -55,3 +55,9 @@ run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE),log_name)
 df_summarised <- summarise_results('output/2023-02-18/')
 df_summarised %>% as.data.frame()
 df_summarised %>% write_csv('output/df_result_summary.csv')
+
+data <- fs::dir_ls('output/2023-02-18/') %>% 
+  consolidate_results()
+
+data %>% display_results()
+

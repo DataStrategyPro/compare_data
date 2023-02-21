@@ -385,25 +385,104 @@ get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FA
   return(df)  
 }
 
-summarise_result <- function(file){
-  print(file)
-  df <- read_csv(file)
+pivot_results <- function(df){
+  df %>% 
+    mutate(pct = as.double(n) / sum(n),
+           result = factor(result, levels = c('Pass','Fail','Warning','Info'))
+           ) %>% 
+    pivot_wider(
+      id_cols = test_name,
+      names_from = result,
+      values_from = pct,
+      names_expand = TRUE,
+      values_fill = 0
+    )     
+}
+
+summarise_result <- function(df,file){
   if(all(c('test_name','result','result_detail','n') %in% names(df))){
     df <- df %>% 
-      janitor::clean_names() %>% 
-      group_by(test_name,result,result_detail) %>% 
-      summarise_at(vars(n,pct),sum,na.rm=TRUE) %>% 
-      arrange(desc(n))
-    
-    return(df)
+      group_by(test_name,result) %>% 
+      summarise_at(vars(n),sum,na.rm=TRUE) %>% 
+      ungroup() %>% 
+      pivot_results()
+   
+
   }else{
-    print("***** test_name, result, result_detail, n, pct are mandatory*****")
-    return()
+    df <- tibble(
+      test_name = file %>% fs::path_file() %>% fs::path_ext_remove(),
+      result = 'Info',
+      n = length(df)
+      ) %>% 
+      pivot_results()
   }
+  return(df)
 }
 
 # Loop through a folder of result output files
 summarise_results <- function(folder){
   fs::dir_ls(folder) %>% 
     map_dfr(summarise_result)
+}
+
+standardise_csv <- function(file,rename_list=NULL){
+  df <- read_csv(file)
+  df <- df %>% janitor::clean_names()
+  if(!is.null(rename_list)){
+    df <- df %>% rename(any(rename_list))
+  }
+  return(df)
+}
+
+consolidate_results <- function(files,rename_list=NULL){
+  df <- tibble(file = files)
+  df <- df %>% mutate(
+    data = map(file,standardise_csv,rename_list),
+    summary = map(data,summarise_result,file)
+    )
+  
+  return(df)
+}
+
+display_results <- function(df_consolidated){
+  df_summary <- df_consolidated %>% 
+    select(summary) %>% 
+    unnest(summary)
+  
+  rt <- reactable(df_summary
+                  , highlight = TRUE
+                  # , selection='single'
+                  # , onClick = 'select'
+                  , filterable = FALSE
+                  , compact = TRUE
+                  #, width = 500
+                  , columns = list(
+                    test_name = colDef(minWidth = 170),
+                    Pass = colDef(format = colFormat(percent = TRUE,digits = 2)),
+                    Fail = colDef(format = colFormat(percent = TRUE,digits = 2)),
+                    Info = colDef(format = colFormat(percent = TRUE,digits = 2)),
+                    Warning = colDef(format = colFormat(percent = TRUE,digits = 2))
+                  )
+                  ,details = function(index){
+                    df_detail <- df_consolidated[index,]$data[[1]]
+                    htmltools::div(
+                      htmltools::h5("Test Description"),
+                      reactable(df_detail,
+                                highlight = TRUE, 
+                                # selection = 'single', 
+                                # onClick = 'select',
+                                filterable = TRUE,
+                                defaultPageSize = 50,
+                                resizable = TRUE
+                                # Commenting out because column always needs to be there
+                                # columns = list(
+                                #   pct = colDef(format = colFormat(percent = TRUE,digits = 2))
+                                #   
+                                # )
+                      )
+                      
+                    )
+                  }
+  )
+  return(rt)
 }
