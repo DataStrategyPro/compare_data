@@ -63,21 +63,3 @@ data %>%
   mutate(summary = map(data,summarise_result,file)) %>% 
   unnest(summary)
 
-
-tibble(
-  test_name = c('A','B','A','B','C','A'),
-  result = c('Pass','Pass','Fail','Fail','Fail','Warning'),
-       n = 1:6) %>% 
-  mutate(result = factor(result, levels = c('Pass','Fail','Warning','Info'))) %>% 
-  pivot_wider(
-    id_cols = test_name,names_from = result,values_from = n,names_expand = TRUE,values_fill = 0
-      
-    )
-
-factor(c('Pass','Fail','Warning','Info'))
-
-forcats::as_factor()
-
-forcats::lvls_expand()
-
-tibble(A = c('A','B'))
