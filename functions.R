@@ -434,13 +434,18 @@ standardise_csv <- function(file,rename_list=NULL){
   return(df)
 }
 
-consolidate_results <- function(files,rename_list=NULL){
-  df <- tibble(file = files)
-  df <- df %>% mutate(
-    data = map(file,standardise_csv,rename_list),
-    summary = map(data,summarise_result,file)
-    )
+consolidate_results <- function(files,rename_list=NULL,test_descriptions_file=NULL){
+  df <- tibble(file = files) %>% 
+    mutate(
+      test_name = fs::path_ext_remove(fs::path_file(file)),
+      data = map(file,standardise_csv,rename_list),
+      summary = map(data,summarise_result,file))
   
+  if(!is.null(test_descriptions_file)){
+    df_test_descriptions <- read_csv(test_descriptions_file)
+    df <- df %>% left_join(df_test_descriptions,by = 'test_name')
+  }
+
   return(df)
 }
 
@@ -465,8 +470,11 @@ display_results <- function(df_consolidated){
                   )
                   ,details = function(index){
                     df_detail <- df_consolidated[index,]$data[[1]]
+                    test_description <- df_consolidated[index,] %>% 
+                      select(any_of('test_description')) %>% 
+                      pull()
                     htmltools::div(
-                      htmltools::h5("Test Description"),
+                      htmltools::h5(test_description),
                       reactable(df_detail,
                                 highlight = TRUE, 
                                 # selection = 'single', 

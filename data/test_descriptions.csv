@@ -1,0 +1,7 @@
+test_name,test_description
+db_mpg_white_space,Pass if there is no white space surrounding data
+df_diff,Pass if diff = 0
+df_distinct_count,Information to understand column cardinality for analysis
+df_null_count,Pass if null count = 0
+df_unique_keys,Pass if keys are unique
+df_zero_balance,Pass if balance = 0
