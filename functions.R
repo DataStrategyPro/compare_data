@@ -385,31 +385,61 @@ get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FA
   return(df)  
 }
 
-summarise_result <- function(file,rename_list=NULL){
-  print(file)
-  df <- read_csv(file)
-  df <- df %>% janitor::clean_names()
-  if(!is.null(rename_list)){
-    df <- df %>% rename(any(rename_list))
-  }
-  
+pivot_results <- function(df){
+  df %>% 
+    mutate(pct = as.double(n) / sum(n),
+           result = factor(result, levels = c('Pass','Fail','Warning','Info'))
+           ) %>% 
+    pivot_wider(
+      id_cols = test_name,
+      names_from = result,
+      values_from = pct,
+      names_expand = TRUE,
+      values_fill = 0
+    )     
+}
+
+summarise_result <- function(df,file){
   if(all(c('test_name','result','result_detail','n') %in% names(df))){
     df <- df %>% 
-      group_by(test_name,result,result_detail) %>% 
-      summarise_at(vars(n,pct),sum,na.rm=TRUE) %>% 
+      group_by(test_name,result) %>% 
+      summarise_at(vars(n),sum,na.rm=TRUE) %>% 
       ungroup() %>% 
-      arrange(desc(n)) %>% 
-      mutate(pct = as.double(n) / sum(n))
-    
-    return(df)
+      pivot_results()
+   
+
   }else{
-    print("***** test_name, result, result_detail, n, pct are mandatory*****")
-    return()
+    df <- tibble(
+      test_name = file %>% fs::path_file() %>% fs::path_ext_remove(),
+      result = 'Info',
+      n = length(df)
+      ) %>% 
+      pivot_results()
   }
+  return(df)
 }
 
 # Loop through a folder of result output files
 summarise_results <- function(folder){
   fs::dir_ls(folder) %>% 
     map_dfr(summarise_result)
+}
+
+standardise_csv <- function(file,rename_list=NULL){
+  df <- read_csv(file)
+  df <- df %>% janitor::clean_names()
+  if(!is.null(rename_list)){
+    df <- df %>% rename(any(rename_list))
+  }
+  return(df)
+}
+
+consolidate_results <- function(files,rename_list=NULL){
+  df <- tibble(file = files)
+  df <- df %>% mutate(
+    data = map(file,standardise_csv,rename_list),
+    summary = map(data,summarise_result,file)
+    )
+  
+  return(df)
 }

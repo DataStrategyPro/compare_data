@@ -55,3 +55,29 @@ run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE),log_name)
 df_summarised <- summarise_results('output/2023-02-18/')
 df_summarised %>% as.data.frame()
 df_summarised %>% write_csv('output/df_result_summary.csv')
+
+data <- fs::dir_ls('output/2023-02-18/') %>% 
+  consolidate_results()
+
+data %>% 
+  mutate(summary = map(data,summarise_result,file)) %>% 
+  unnest(summary)
+
+
+tibble(
+  test_name = c('A','B','A','B','C','A'),
+  result = c('Pass','Pass','Fail','Fail','Fail','Warning'),
+       n = 1:6) %>% 
+  mutate(result = factor(result, levels = c('Pass','Fail','Warning','Info'))) %>% 
+  pivot_wider(
+    id_cols = test_name,names_from = result,values_from = n,names_expand = TRUE,values_fill = 0
+      
+    )
+
+factor(c('Pass','Fail','Warning','Info'))
+
+forcats::as_factor()
+
+forcats::lvls_expand()
+
+tibble(A = c('A','B'))
