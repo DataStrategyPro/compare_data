@@ -385,15 +385,21 @@ get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FA
   return(df)  
 }
 
-summarise_result <- function(file){
+summarise_result <- function(file,rename_list=NULL){
   print(file)
   df <- read_csv(file)
+  df <- df %>% janitor::clean_names()
+  if(!is.null(rename_list)){
+    df <- df %>% rename(any(rename_list))
+  }
+  
   if(all(c('test_name','result','result_detail','n') %in% names(df))){
     df <- df %>% 
-      janitor::clean_names() %>% 
       group_by(test_name,result,result_detail) %>% 
       summarise_at(vars(n,pct),sum,na.rm=TRUE) %>% 
-      arrange(desc(n))
+      ungroup() %>% 
+      arrange(desc(n)) %>% 
+      mutate(pct = as.double(n) / sum(n))
     
     return(df)
   }else{
