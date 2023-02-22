@@ -461,7 +461,7 @@ display_results <- function(df_consolidated){
                   # , selection='single'
                   # , onClick = 'select'
                   , filterable = FALSE
-                  , defaultPageSize = 50
+                  , defaultPageSize = 100
                   , compact = TRUE
                   #, width = 500
                   , columns = list(
