@@ -63,4 +63,12 @@ data
 
 data %>% display_results()
 
+output_folder <- paste0("output/",lubridate::today())
+
+rmarkdown::render('report_results.Rmd',
+                  output_dir = output_folder, 
+                  params = list(
+                    summarise_folder = "output/2023-02-18/",
+                    test_description_file = "data/test_descriptions.csv"
+                    ))
 

@@ -1,0 +1,25 @@
+---
+title: "Test Results"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+params:
+  summarise_folder: "output/2023-02-18/"
+  test_description_file: "data/test_descriptions.csv"
+---
+
+```{r setup, include=FALSE}
+source('functions.R')
+data <- fs::dir_ls(params$summarise_folder,glob = '*.csv') %>% 
+  consolidate_results(test_descriptions_file = params$test_description_file)
+```
+
+Column
+-----------------------------------------------------------------------
+
+### Results
+
+```{r}
+data %>% display_results()
+```
