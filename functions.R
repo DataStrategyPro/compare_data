@@ -466,10 +466,47 @@ display_results <- function(df_consolidated){
                   #, width = 500
                   , columns = list(
                     test_name = colDef(minWidth = 170),
-                    Pass = colDef(format = colFormat(percent = TRUE,digits = 2)),
-                    Fail = colDef(format = colFormat(percent = TRUE,digits = 2)),
-                    Info = colDef(format = colFormat(percent = TRUE,digits = 2)),
-                    Warning = colDef(format = colFormat(percent = TRUE,digits = 2))
+                    Pass = colDef(
+                      format = colFormat(percent = TRUE,digits = 2),
+                      style = function(value){
+                        if (value > 0){
+                          color <- "#33ca47"
+                        } else{
+                          color <- "#ffffff"
+                        }
+                        list(backgroundColor = color,color = "#ffffff")
+                      }
+                      ),
+                    Fail = colDef(
+                      format = colFormat(percent = TRUE,digits = 2),
+                      style = function(value){
+                        if (value > 0){
+                          color <- "#f44336"
+                        } else{
+                          color <- "#ffffff"
+                        }
+                        list(backgroundColor = color,color = "#ffffff")
+                      }),
+                    Info = colDef(
+                      format = colFormat(percent = TRUE,digits = 2),
+                      style = function(value){
+                        if (value > 0){
+                          color <- "#2986cc"
+                        } else{
+                          color <- "#ffffff"
+                        }
+                        list(backgroundColor = color,color = "#ffffff")
+                      }),
+                    Warning = colDef(
+                      format = colFormat(percent = TRUE,digits = 2),
+                       style = function(value){
+                         if (value > 0){
+                           color <- "#e69138"
+                         } else{
+                           color <- "#ffffff"
+                         }
+                         list(backgroundColor = color,color = "#ffffff")
+                       })
                   )
                   ,details = function(index){
                     df_detail <- df_consolidated[index,]$data[[1]]
