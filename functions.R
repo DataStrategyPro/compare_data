@@ -1,5 +1,7 @@
 library(tidyverse)
 library(dbplyr)
+library(fs)
+library(reactable)
 
 # Helper functions --------------------------------------------------------
 
@@ -399,21 +401,18 @@ pivot_results <- function(df){
     )     
 }
 
-summarise_result <- function(df,file){
-  if(all(c('test_name','result','result_detail','n') %in% names(df))){
+summarise_result <- function(df){
+  if(all(c('result','n') %in% names(df))){
     df <- df %>% 
       group_by(test_name,result) %>% 
       summarise_at(vars(n),sum,na.rm=TRUE) %>% 
       ungroup() %>% 
       pivot_results()
    
-
   }else{
-    df <- tibble(
-      test_name = file %>% fs::path_file() %>% fs::path_ext_remove(),
-      result = 'Info',
-      n = length(df)
-      ) %>% 
+    df <- df %>% 
+      count(test_name) %>% 
+      mutate(result = 'Info') %>% 
       pivot_results()
   }
   return(df)
@@ -426,8 +425,11 @@ summarise_results <- function(folder){
 }
 
 standardise_csv <- function(file,rename_list=NULL){
+  test_name = path_ext_remove(path_file(file))
   df <- read_csv(file)
-  df <- df %>% janitor::clean_names()
+  df <- df %>% 
+    janitor::clean_names() %>% 
+    mutate(test_name = test_name)
   if(!is.null(rename_list)){
     df <- df %>% rename(any(rename_list))
   }
@@ -439,7 +441,7 @@ consolidate_results <- function(files,rename_list=NULL,test_descriptions_file=NU
     mutate(
       test_name = fs::path_ext_remove(fs::path_file(file)),
       data = map(file,standardise_csv,rename_list),
-      summary = map(data,summarise_result,file))
+      summary = map(data,summarise_result))
   
   if(!is.null(test_descriptions_file)){
     df_test_descriptions <- read_csv(test_descriptions_file)
