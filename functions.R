@@ -223,7 +223,7 @@ check_complete <- function(df,ref){
 
 # df is the table you want to check against the ref table to check for variance on a specified numeric field
 # numeric field from table df and ref should be equal when compared on a common aggregate
-check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE, tolerance = 0.01){
+check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE, precision = 2){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'diff')
   }
@@ -240,12 +240,12 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
     full_join(ref,by = gb,copy = TRUE) %>% 
     ungroup() %>% 
     mutate(
-      diff = df_value - ref_value,
+      diff = round(df_value - ref_value,precision),
       n = (ifelse(is.na(df_n),0,df_n) + ifelse(is.na(ref_n),0,ref_n))/2,
       pct = n / sum(n),
-      result = case_when(abs(diff) < tolerance & diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
+      result = case_when(diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(
-        abs(diff) < tolerance & diff == 0 ~ '',
+        diff == 0 ~ '',
         is.na(df_value) ~ 'Not in data',
         is.na(ref_value) ~ 'Not in ref',
         diff > 0 ~ 'data is greater than source',
