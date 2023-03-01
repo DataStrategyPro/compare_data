@@ -234,7 +234,7 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
   
   ref <- ref %>% 
     group_by(!!!syms(gb)) %>% 
-    summarise(ref_value = sum(!!sym(df_value_col),na.rm = TRUE),ref_n = n())
+    summarise(ref_value = sum(!!sym(ref_value_col),na.rm = TRUE),ref_n = n())
   
   df <- df %>% 
     full_join(ref,by = gb,copy = TRUE) %>% 
