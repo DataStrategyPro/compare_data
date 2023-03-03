@@ -11,6 +11,7 @@ params:
 
 ```{r setup, include=FALSE}
 source('functions.R')
+run_date <- lubridate::now()
 data <- fs::dir_ls(params$summarise_folder,glob = '*.csv') %>% 
   consolidate_results(test_descriptions_file = params$test_description_file)
 ```
@@ -18,7 +19,7 @@ data <- fs::dir_ls(params$summarise_folder,glob = '*.csv') %>%
 Column
 -----------------------------------------------------------------------
 
-### Results
+### Results Compiled at `r run_date`
 
 ```{r}
 data %>% display_results()
