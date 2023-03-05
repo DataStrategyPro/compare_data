@@ -451,6 +451,10 @@ consolidate_results <- function(files,rename_list=NULL,test_descriptions_file=NU
   return(df)
 }
 
+pct_fmt <- function(x){
+  paste0(floor(x * 10000) / 100, "%")
+}
+
 display_results <- function(df_consolidated){
   df_summary <- df_consolidated %>% 
     select(summary) %>% 
@@ -467,7 +471,9 @@ display_results <- function(df_consolidated){
                   , columns = list(
                     test_name = colDef(minWidth = 170),
                     Pass = colDef(
-                      format = colFormat(percent = TRUE,digits = 2),
+                      cell = function(value){
+                        pct_fmt(value)
+                      },
                       style = function(value){
                         if (value > 0){
                           color <- "#33ca47"
@@ -478,7 +484,9 @@ display_results <- function(df_consolidated){
                       }
                       ),
                     Fail = colDef(
-                      format = colFormat(percent = TRUE,digits = 2),
+                      cell = function(value){
+                        pct_fmt(value)
+                      },
                       style = function(value){
                         if (value > 0){
                           color <- "#f44336"
@@ -488,7 +496,9 @@ display_results <- function(df_consolidated){
                         list(backgroundColor = color,color = "#ffffff")
                       }),
                     Info = colDef(
-                      format = colFormat(percent = TRUE,digits = 2),
+                      cell = function(value){
+                        pct_fmt(value)
+                      },
                       style = function(value){
                         if (value > 0){
                           color <- "#2986cc"
@@ -498,7 +508,9 @@ display_results <- function(df_consolidated){
                         list(backgroundColor = color,color = "#ffffff")
                       }),
                     Warning = colDef(
-                      format = colFormat(percent = TRUE,digits = 2),
+                      cell = function(value){
+                        pct_fmt(value)
+                      },
                        style = function(value){
                          if (value > 0){
                            color <- "#e69138"
