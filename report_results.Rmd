@@ -21,7 +21,7 @@ data <- fs::dir_ls(params$summarise_folder,glob = '*.csv') %>%
 Column
 -----------------------------------------------------------------------
 
-### Results Compiled at `r report_info`
+### **Results Compiled:** `r report_info`
 
 ```{r}
 data %>% display_results()
