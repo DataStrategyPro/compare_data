@@ -266,7 +266,7 @@ mk_acceptable_value_lkp <- function(df,gb,acceptable_value_col,write=FALSE){
   df <- df %>% 
     group_by(!!!syms(gb)) %>% 
     mutate("valid_{acceptable_value_col}s" := str_c(!!sym(acceptable_value_col),collapse = ',')) %>% 
-    select(!!!syms(gb),matches(glue("valid_{acceptable_Value_col}s"))) %>% 
+    select(!!!syms(gb),matches(glue("valid_{acceptable_value_col}s"))) %>% 
     distinct()
 
   write_result_csv(df,test_name = test_name,write = write)
