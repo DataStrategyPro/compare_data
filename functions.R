@@ -422,6 +422,8 @@ pivot_results <- function(df){
     )     
 }
 
+
+# This summary is used for the high level report view
 summarise_result <- function(df){
   if(all(c('result','n') %in% names(df))){
     df <- df %>% 
@@ -437,6 +439,14 @@ summarise_result <- function(df){
       pivot_results()
   }
   return(df)
+}
+
+result_detail_summary <- function(df){
+  df %>% 
+    group_by(result, result_detail) %>% 
+    summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
+    ungroup() %>% 
+    mutate(pct = n / sum(n, na.rm = TRUE))
 }
 
 # Loop through a folder of result output files
