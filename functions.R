@@ -441,6 +441,7 @@ summarise_result <- function(df){
   return(df)
 }
 
+# Summary for second layer of drill down
 result_detail_summary <- function(df){
   df %>% 
     group_by(result, result_detail) %>% 
