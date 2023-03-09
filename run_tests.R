@@ -59,7 +59,12 @@ df_summarised %>% write_csv('output/df_result_summary.csv')
 data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>% 
   consolidate_results(test_descriptions_file = 'data/test_descriptions.csv')
 
-data
+data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>% 
+  consolidate_results2(test_detail_file = 'data/test_details.csv')
+
+data %>% 
+  select(test_name, summary, to_do) %>% 
+  unnest(summary, keep_empty = TRUE)
 
 data %>% display_results()
 
