@@ -50,7 +50,7 @@ run(check_stats(df,gb=c('category','id'),write = TRUE),log_name)
 
 run(check_zero_balance(df,'value','category',write = TRUE),log_name)
 
-run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE),log_name)
+run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE, df_name = 'x', ref_name = 'y'),log_name)
 
 df_summarised <- summarise_results('output/2023-02-18/')
 df_summarised %>% as.data.frame()
@@ -59,10 +59,17 @@ df_summarised %>% write_csv('output/df_result_summary.csv')
 data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>% 
   consolidate_results(test_descriptions_file = 'data/test_descriptions.csv')
 
+data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>% 
+  consolidate_results2(test_detail_file = 'data/test_details.csv')
+
 data
+data %>% 
+  select(test_name, summary, to_do) %>% 
+  unnest(summary, keep_empty = TRUE) %>% 
+  reactable()
 
 data %>% display_results()
-
+data
 output_folder <- paste0("output/",lubridate::today())
 
 rmarkdown::render('report_results.Rmd',
@@ -70,5 +77,12 @@ rmarkdown::render('report_results.Rmd',
                   params = list(
                     summarise_folder = "output/2023-02-18/",
                     test_description_file = "data/test_descriptions.csv"
+                    ))
+
+rmarkdown::render('report_results2.Rmd',
+                  output_dir = output_folder, 
+                  params = list(
+                    summarise_folder = "output/2023-02-18/",
+                    test_detail_file = "data/test_details.csv"
                     ))
 

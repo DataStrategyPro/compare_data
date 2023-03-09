@@ -274,12 +274,12 @@ check_diff <- function(
       result = case_when(diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(
         diff == 0 ~ 'Diff = 0',
-        df_n == 0 ~ 'Not in data',
-        ref_n == 0 ~ 'Not in ref',
-        is.na(df_value) ~ 'Null value in Data',
-        is.na(ref_value) ~ 'Null value in Ref',
-        diff > 0 ~ 'data is greater than source',
-        diff < 0 ~ 'data is less than source',
+        df_n == 0 ~ paste0('Not in ', df_name),
+        ref_n == 0 ~ paste0('Not in ', ref_name),
+        is.na(df_value) ~ paste0('Null value in ', df_name),
+        is.na(ref_value) ~ paste0('Null value in ', ref_name),
+        diff > 0 ~ paste0(df_name, '_value is greater than ', ref_name, '_value'),
+        diff < 0 ~ paste0(df_name, '_value is less than ', ref_name, '_value'),
         TRUE ~ 'Unexpected error'
       )
     ) %>%
@@ -425,11 +425,12 @@ get_group_samples <- function(df, lkp, n_rows=1, add_cols='', all_cols=FALSE, pr
 
 pivot_results <- function(df){
   df %>% 
-    mutate(pct = as.double(n) / sum(n),
-           result = factor(result, levels = c('Pass','Fail','Warning','Info'))
-           ) %>% 
+    transmute(
+      result = factor(result, levels = c('Pass','Fail','Warning','Info')),
+      pct = as.double(n) / sum(n)
+    ) %>% 
     pivot_wider(
-      id_cols = test_name,
+      # id_cols = test_name,
       names_from = result,
       values_from = pct,
       names_expand = TRUE,
@@ -442,7 +443,7 @@ pivot_results <- function(df){
 summarise_result <- function(df){
   if(all(c('result','n') %in% names(df))){
     df <- df %>% 
-      group_by(test_name,result) %>% 
+      group_by(result) %>% 
       summarise_at(vars(n),sum,na.rm=TRUE) %>% 
       ungroup() %>% 
       pivot_results()
@@ -498,14 +499,33 @@ consolidate_results <- function(files,rename_list=NULL,test_descriptions_file=NU
   return(df)
 }
 
+consolidate_results2 <- function(files,rename_list=NULL,test_detail_file=NULL){
+  df <- tibble(file = files) %>% 
+    mutate(
+      file_name = fs::path_ext_remove(fs::path_file(file)),
+      data = map(file,standardise_csv,rename_list),
+      summary = map(data,summarise_result))
+  
+  if(!is.null(test_detail_file)){
+    df_test_descriptions <- read_csv(test_detail_file)
+    df <- df %>% 
+      full_join(df_test_descriptions,by = 'file_name') %>% 
+      filter(display == 'x') %>% 
+      arrange(test_name)
+  }
+
+  return(df)
+}
+
 pct_fmt <- function(x){
   paste0(floor(x * 10000) / 100, "%")
 }
 
 display_results <- function(df_consolidated){
   df_summary <- df_consolidated %>% 
-    select(summary) %>% 
-    unnest(summary)
+    select(test_name, summary, to_do) %>% 
+    unnest(summary, keep_empty = FALSE)
+    # unnest(summary, keep_empty = TRUE)
   
   rt <- reactable(df_summary
                   , highlight = TRUE
