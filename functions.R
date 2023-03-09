@@ -223,7 +223,18 @@ check_complete <- function(df,ref){
 
 # df is the table you want to check against the ref table to check for variance on a specified numeric field
 # numeric field from table df and ref should be equal when compared on a common aggregate
-check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE, precision = 2){
+check_diff <- function(
+    df,
+    ref,
+    df_value_col,
+    ref_value_col=df_value_col,
+    gb=NULL,
+    test_name=NULL,
+    write=FALSE, 
+    precision = 2,
+    df_name = 'df',
+    ref_name = 'ref'
+    ){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'diff')
   }
@@ -257,6 +268,12 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
         TRUE ~ 'Unexpected error'
       )
     ) %>%
+    rename(
+      '{df_name}_value' := df_value, 
+      '{ref_name}_value' := ref_value, 
+      '{df_name}_n' := df_n, 
+      '{ref_name}_n' := ref_n
+    ) %>% 
     # select(-df_n,-ref_n) %>% 
     add_test_name(test_name)#  %>%
     # mutate(test_name = paste(test_name,!!!syms(gb)))
