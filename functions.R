@@ -215,6 +215,21 @@ check_zero_balance <- function(df,value_col,gb=NULL,test_name=NULL,write=FALSE){
   return(df)  
 }
 
+# check balance replaces check_zero_balance
+# it adds a split for debit and credit values
+check_balance <- function(df, debit_col, credit_col, gb){
+  df %>% 
+    mutate(n=1) %>% 
+    group_by(!!!syms(gb)) %>% 
+    summarise_at(vars(debit_col, credit_col, n)) %>% 
+    mutate(
+      balance = !!sym(debit_col) + !!sym(credit_col),
+      result = ifelse(balance = 0, 'Pass', 'Fail'),
+      result_detail = ifelse(balance = 0, 'Balance is zero', 'Balance not zero')
+      ) %>% 
+    ungroup()
+}
+
 # df is the table you want to check against the ref table to check for completeness
 # the ref table has a list of all the combinations that must be present in the df table to pass
 check_complete <- function(df,ref){
