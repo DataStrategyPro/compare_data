@@ -379,7 +379,7 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
 # Therefore a sample of IDs for a group of failed records can be useful
 
 
-get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
+get_group_samples <- function(df, lkp, n_rows=1, add_cols='', all_cols=FALSE, print_sql=FALSE, write=FALSE){
   df <- df %>% 
     group_by(result,result_detail) %>% 
     filter(row_number()<=n) %>% 
@@ -392,7 +392,7 @@ get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FA
     inner_join(df,copy = TRUE) %>% 
     mutate(temp=1) %>% 
     group_by(!!!syms(set)) %>% 
-    slice_sample(temp,n=n,with_ties=FALSE) %>% 
+    slice_sample(temp, n=n_rows, with_ties=FALSE) %>% 
     select(-temp) %>% 
     select({{df_names}},any_of(add_cols),if(all_cols){everything()})
   
