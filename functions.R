@@ -215,6 +215,21 @@ check_zero_balance <- function(df,value_col,gb=NULL,test_name=NULL,write=FALSE){
   return(df)  
 }
 
+# check balance replaces check_zero_balance
+# it adds a split for debit and credit values
+check_balance <- function(df, debit_col, credit_col, gb){
+  df %>% 
+    mutate(n=1) %>% 
+    group_by(!!!syms(gb)) %>% 
+    summarise_at(vars(debit_col, credit_col, n)) %>% 
+    mutate(
+      balance = !!sym(debit_col) + !!sym(credit_col),
+      result = ifelse(balance = 0, 'Pass', 'Fail'),
+      result_detail = ifelse(balance = 0, 'Balance is zero', 'Balance not zero')
+      ) %>% 
+    ungroup()
+}
+
 # df is the table you want to check against the ref table to check for completeness
 # the ref table has a list of all the combinations that must be present in the df table to pass
 check_complete <- function(df,ref){
@@ -223,7 +238,18 @@ check_complete <- function(df,ref){
 
 # df is the table you want to check against the ref table to check for variance on a specified numeric field
 # numeric field from table df and ref should be equal when compared on a common aggregate
-check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,test_name=NULL,write=FALSE, precision = 2){
+check_diff <- function(
+    df,
+    ref,
+    df_value_col,
+    ref_value_col=df_value_col,
+    gb=NULL,
+    test_name=NULL,
+    write=FALSE, 
+    precision = 2,
+    df_name = 'df',
+    ref_name = 'ref'
+    ){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'diff')
   }
@@ -241,19 +267,29 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
     ungroup() %>% 
     mutate(
       diff = round(df_value - ref_value,precision),
-      n = (ifelse(is.na(df_n),0,df_n) + ifelse(is.na(ref_n),0,ref_n))/2,
-      pct = n / sum(n),
+      df_n = ifelse(is.na(df_n),0,df_n),
+      ref_n = ifelse(is.na(ref_n),0,ref_n),
+      n = max(df_n, ref_n),
+      pct = as.double(n) / sum(n),
       result = case_when(diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(
-        diff == 0 ~ '',
-        is.na(df_value) ~ 'Not in data',
-        is.na(ref_value) ~ 'Not in ref',
+        diff == 0 ~ 'Diff = 0',
+        df_n == 0 ~ 'Not in data',
+        ref_n == 0 ~ 'Not in ref',
+        is.na(df_value) ~ 'Null value in Data',
+        is.na(ref_value) ~ 'Null value in Ref',
         diff > 0 ~ 'data is greater than source',
         diff < 0 ~ 'data is less than source',
         TRUE ~ 'Unexpected error'
       )
     ) %>%
-    select(-df_n,-ref_n) %>% 
+    rename(
+      '{df_name}_value' := df_value, 
+      '{ref_name}_value' := ref_value, 
+      '{df_name}_n' := df_n, 
+      '{ref_name}_n' := ref_n
+    ) %>% 
+    # select(-df_n,-ref_n) %>% 
     add_test_name(test_name)#  %>%
     # mutate(test_name = paste(test_name,!!!syms(gb)))
   
@@ -266,7 +302,7 @@ mk_acceptable_value_lkp <- function(df,gb,acceptable_value_col,write=FALSE){
   df <- df %>% 
     group_by(!!!syms(gb)) %>% 
     mutate("valid_{acceptable_value_col}s" := str_c(!!sym(acceptable_value_col),collapse = ',')) %>% 
-    select(!!!syms(gb),matches(glue("valid_{acceptable_Value_col}s"))) %>% 
+    select(!!!syms(gb),matches(glue("valid_{acceptable_value_col}s"))) %>% 
     distinct()
 
   write_result_csv(df,test_name = test_name,write = write)
@@ -358,7 +394,7 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
 # Therefore a sample of IDs for a group of failed records can be useful
 
 
-get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FALSE,write=FALSE){
+get_group_samples <- function(df, lkp, n_rows=1, add_cols='', all_cols=FALSE, print_sql=FALSE, write=FALSE){
   df <- df %>% 
     group_by(result,result_detail) %>% 
     filter(row_number()<=n) %>% 
@@ -371,7 +407,7 @@ get_group_samples <- function(df,lkp,n=1,add_cols='',all_cols=FALSE,print_sql=FA
     inner_join(df,copy = TRUE) %>% 
     mutate(temp=1) %>% 
     group_by(!!!syms(set)) %>% 
-    slice_sample(temp,n=n,with_ties=FALSE) %>% 
+    slice_sample(temp, n=n_rows, with_ties=FALSE) %>% 
     select(-temp) %>% 
     select({{df_names}},any_of(add_cols),if(all_cols){everything()})
   
@@ -401,6 +437,8 @@ pivot_results <- function(df){
     )     
 }
 
+
+# This summary is used for the high level report view
 summarise_result <- function(df){
   if(all(c('result','n') %in% names(df))){
     df <- df %>% 
@@ -416,6 +454,15 @@ summarise_result <- function(df){
       pivot_results()
   }
   return(df)
+}
+
+# Summary for second layer of drill down
+result_detail_summary <- function(df){
+  df %>% 
+    group_by(result, result_detail) %>% 
+    summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
+    ungroup() %>% 
+    mutate(pct = n / sum(n, na.rm = TRUE))
 }
 
 # Loop through a folder of result output files
