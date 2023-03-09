@@ -255,7 +255,7 @@ check_diff <- function(
       df_n = ifelse(is.na(df_n),0,df_n),
       ref_n = ifelse(is.na(ref_n),0,ref_n),
       n = max(df_n, ref_n),
-      pct = n / sum(n),
+      pct = as.double(n) / sum(n),
       result = case_when(diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(
         diff == 0 ~ 'Diff = 0',
