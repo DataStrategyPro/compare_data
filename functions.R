@@ -524,7 +524,8 @@ pct_fmt <- function(x){
 display_results <- function(df_consolidated){
   df_summary <- df_consolidated %>% 
     select(test_name, summary, to_do) %>% 
-    unnest(summary, keep_empty = TRUE)
+    unnest(summary, keep_empty = FALSE)
+    # unnest(summary, keep_empty = TRUE)
   
   rt <- reactable(df_summary
                   , highlight = TRUE
