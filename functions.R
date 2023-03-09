@@ -241,19 +241,23 @@ check_diff <- function(df,ref,df_value_col,ref_value_col=df_value_col,gb=NULL,te
     ungroup() %>% 
     mutate(
       diff = round(df_value - ref_value,precision),
-      n = (ifelse(is.na(df_n),0,df_n) + ifelse(is.na(ref_n),0,ref_n))/2,
+      df_n = ifelse(is.na(df_n),0,df_n),
+      ref_n = ifelse(is.na(ref_n),0,ref_n),
+      n = max(df_n, ref_n),
       pct = n / sum(n),
       result = case_when(diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(
-        diff == 0 ~ '',
-        is.na(df_value) ~ 'Not in data',
-        is.na(ref_value) ~ 'Not in ref',
+        diff == 0 ~ 'Diff = 0',
+        df_n == 0 ~ 'Not in data',
+        ref_n == 0 ~ 'Not in ref',
+        is.na(df_value) ~ 'Null value in Data',
+        is.na(ref_value) ~ 'Null value in Ref',
         diff > 0 ~ 'data is greater than source',
         diff < 0 ~ 'data is less than source',
         TRUE ~ 'Unexpected error'
       )
     ) %>%
-    select(-df_n,-ref_n) %>% 
+    # select(-df_n,-ref_n) %>% 
     add_test_name(test_name)#  %>%
     # mutate(test_name = paste(test_name,!!!syms(gb)))
   
