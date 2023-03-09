@@ -524,8 +524,8 @@ pct_fmt <- function(x){
 display_results <- function(df_consolidated){
   df_summary <- df_consolidated %>% 
     select(test_name, summary, to_do) %>% 
-    unnest(summary, keep_empty = FALSE)
-    # unnest(summary, keep_empty = TRUE)
+    unnest(summary, keep_empty = TRUE) %>% 
+    mutate_if(is.numeric,replace_na,0) 
   
   rt <- reactable(df_summary
                   , highlight = TRUE
@@ -589,25 +589,28 @@ display_results <- function(df_consolidated){
                   )
                   ,details = function(index){
                     df_detail <- df_consolidated[index,]$data[[1]]
-                    test_description <- df_consolidated[index,] %>% 
-                      select(any_of('test_description')) %>% 
+                    test_description <- df_consolidated[index,] %>%
+                      select(any_of('test_description')) %>%
                       pull()
                     htmltools::div(
                       htmltools::h5(test_description),
-                      reactable(df_detail,
-                                highlight = TRUE, 
-                                # selection = 'single', 
-                                # onClick = 'select',
-                                filterable = TRUE,
-                                defaultPageSize = 50,
-                                resizable = TRUE
-                                # Commenting out because column always needs to be there
-                                # columns = list(
-                                #   pct = colDef(format = colFormat(percent = TRUE,digits = 2))
-                                #   
-                                # )
-                      )
-                      
+                      if (!is.null(df_detail)) {
+                        reactable(df_detail,
+                                  highlight = TRUE,
+                                  # selection = 'single',
+                                  # onClick = 'select',
+                                  filterable = TRUE,
+                                  defaultPageSize = 50,
+                                  resizable = TRUE
+                                  # Commenting out because column always needs to be there
+                                  # columns = list(
+                                  #   pct = colDef(format = colFormat(percent = TRUE,digits = 2))
+                                  #
+                                  # )
+                        )
+                        
+                      }
+
                     )
                   }
   )
