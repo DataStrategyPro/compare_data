@@ -274,12 +274,12 @@ check_diff <- function(
       result = case_when(diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
       result_detail = case_when(
         diff == 0 ~ 'Diff = 0',
-        df_n == 0 ~ 'Not in data',
-        ref_n == 0 ~ 'Not in ref',
-        is.na(df_value) ~ 'Null value in Data',
-        is.na(ref_value) ~ 'Null value in Ref',
-        diff > 0 ~ 'data is greater than source',
-        diff < 0 ~ 'data is less than source',
+        df_n == 0 ~ paste0('Not in ', df_name),
+        ref_n == 0 ~ paste0('Not in ', ref_name),
+        is.na(df_value) ~ paste0('Null value in ', df_name),
+        is.na(ref_value) ~ paste0('Null value in ', ref_name),
+        diff > 0 ~ paste0(df_name, '_value is greater than ', ref_name, '_value'),
+        diff < 0 ~ paste0(df_name, '_value is less than ', ref_name, '_value'),
         TRUE ~ 'Unexpected error'
       )
     ) %>%

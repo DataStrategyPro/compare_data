@@ -50,7 +50,7 @@ run(check_stats(df,gb=c('category','id'),write = TRUE),log_name)
 
 run(check_zero_balance(df,'value','category',write = TRUE),log_name)
 
-run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE),log_name)
+run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE, df_name = 'x', ref_name = 'y'),log_name)
 
 df_summarised <- summarise_results('output/2023-02-18/')
 df_summarised %>% as.data.frame()
