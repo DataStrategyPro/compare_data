@@ -56,33 +56,39 @@ df_summarised <- summarise_results('output/2023-02-18/')
 df_summarised %>% as.data.frame()
 df_summarised %>% write_csv('output/df_result_summary.csv')
 
-data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>% 
-  consolidate_results(test_descriptions_file = 'data/test_descriptions.csv')
-
-data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>% 
+source('functions.R')
+data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>%
   consolidate_results2(test_detail_file = 'data/test_details.csv')
 
 data
-data %>% 
-  select(test_name, summary, to_do) %>% 
-  unnest(summary, keep_empty = TRUE) %>% 
+data %>%
+  select(test_name, summary, to_do) %>%
+  unnest(summary, keep_empty = TRUE) %>%
+  mutate_if(is.numeric,replace_na, 0) %>%
   reactable()
 
-data %>% display_results()
-data
+test_results <- data %>% display_results()
+
 output_folder <- paste0("output/",lubridate::today())
 
 rmarkdown::render('report_results.Rmd',
                   output_dir = output_folder, 
                   params = list(
-                    summarise_folder = "output/2023-02-18/",
-                    test_description_file = "data/test_descriptions.csv"
+                    test_results = test_results,
+                    test_info = 'useuful info like environment, output folder etc'
                     ))
 
-rmarkdown::render('report_results2.Rmd',
-                  output_dir = output_folder, 
-                  params = list(
-                    summarise_folder = "output/2023-02-18/",
-                    test_detail_file = "data/test_details.csv"
-                    ))
-
+# rmarkdown::render('report_results_legacy.Rmd',
+#                   output_dir = output_folder, 
+#                   params = list(
+#                     summarise_folder = "output/2023-02-18/",
+#                     test_description_file = "data/test_descriptions.csv"
+#                     ))
+# 
+# rmarkdown::render('report_results2.Rmd',
+#                   output_dir = output_folder, 
+#                   params = list(
+#                     summarise_folder = "output/2023-02-18/",
+#                     test_detail_file = "data/test_details.csv"
+#                     ))
+# 
