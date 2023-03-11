@@ -1,4 +1,4 @@
-﻿display,test_name,file_name,test_description,notes,to_do
+﻿hide,test_name,file_name,test_description,notes,to_do
 x,0500_mpg_white_space,db_mpg_white_space,Pass if there is no white space surrounding data,,
 x,0400_diff,df_diff,Pass if diff = 0,,
 x,0400_distinct_count,df_distinct_count,Information to understand column cardinality for analysis,,
