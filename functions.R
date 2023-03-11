@@ -438,6 +438,35 @@ pivot_results <- function(df){
     )     
 }
 
+# the source should contain all of the transactions
+# this add the results and result details to the transactions
+# the results can then be used as a label for machine learning
+# to understand the cause of failure
+
+add_results_to_source <- function(results, source, match_on){
+  source %>% 
+    inner_join(
+      df_results %>% 
+        select(!!!syms(match_on), result, result_detail),
+      by = match_on,
+      copy = TRUE
+    )
+}
+
+# get a sample of transactions for each result
+# For reporting use replace = FALSE to pull each transaction only once
+# For ML use replace = TRUE and increase n to > 1000 to perform over sampling
+# Over sampling is a technique used to make an number of records per group which 
+# important for machine learning to detect the results
+get_transaction_sample <- function(df, n = 10, replace = FALSE){
+  if(is(df,'tbl_sql')){
+    df <- df %>% 
+      slice_sample(by = c(result, result_detail), n = n, with_ties = FALSE) %>% 
+      collect()
+  }
+  df %>% slice_sample(by = c(result, result_detail), n = n, replace = replace)
+}
+
 
 # This summary is used for the high level report view
 summarise_result <- function(df){
