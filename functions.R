@@ -533,13 +533,15 @@ consolidate_results2 <- function(files,rename_list=NULL,test_detail_file=NULL){
     mutate(
       file_name = fs::path_ext_remove(fs::path_file(file)),
       data = map(file,standardise_csv,rename_list),
-      summary = map(data,summarise_result))
+      summary = map(data,summarise_result)
+      ,detail_summary = map(data,result_detail_summary)
+      )
   
   if(!is.null(test_detail_file)){
     df_test_descriptions <- read_csv(test_detail_file)
     df <- df %>% 
       full_join(df_test_descriptions,by = 'file_name') %>% 
-      filter(hide != 'x') %>% 
+      filter(hide != 'x' | is.na(hide)) %>% 
       arrange(test_name)
   }
 
