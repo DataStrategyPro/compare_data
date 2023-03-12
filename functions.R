@@ -450,7 +450,7 @@ pivot_results <- function(df){
 label_transactions <- function(results, source, match_on){
   source %>% 
     inner_join(
-      df_results %>% 
+      results %>% 
         select(!!!syms(match_on), result, result_detail),
       by = match_on,
       copy = TRUE
