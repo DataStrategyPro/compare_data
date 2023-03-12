@@ -443,7 +443,7 @@ pivot_results <- function(df){
 # the results can then be used as a label for machine learning
 # to understand the cause of failure
 
-add_results_to_source <- function(results, source, match_on){
+label_transactions <- function(results, source, match_on){
   source %>% 
     inner_join(
       df_results %>% 

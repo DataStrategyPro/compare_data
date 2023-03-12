@@ -57,7 +57,7 @@ match_on = c('category')
 
 df_results <- check_diff(df,ref,'value',gb=c(match_on), df_name = 'df', ref_name = 'ref')
 
-source_with_results <-  add_results_to_source(df_results, df, match_on = match_on)
+source_with_results <-  label_transactions(df_results, df, match_on = match_on)
 
 
 get_transaction_sample(source_with_results,n = 10, replace = TRUE)
