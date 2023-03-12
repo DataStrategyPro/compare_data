@@ -438,6 +438,35 @@ pivot_results <- function(df){
     )     
 }
 
+# the source should contain all of the transactions
+# this add the results and result details to the transactions
+# the results can then be used as a label for machine learning
+# to understand the cause of failure
+
+label_transactions <- function(results, source, match_on){
+  source %>% 
+    inner_join(
+      df_results %>% 
+        select(!!!syms(match_on), result, result_detail),
+      by = match_on,
+      copy = TRUE
+    )
+}
+
+# get a sample of transactions for each result
+# For reporting use replace = FALSE to pull each transaction only once
+# For ML use replace = TRUE and increase n to > 1000 to perform over sampling
+# Over sampling is a technique used to make an number of records per group which 
+# important for machine learning to detect the results
+get_transaction_sample <- function(df, n = 10, replace = FALSE){
+  if(is(df,'tbl_sql')){
+    df <- df %>% 
+      slice_sample(by = c(result, result_detail), n = n, with_ties = FALSE) %>% 
+      collect()
+  }
+  df %>% slice_sample(by = c(result, result_detail), n = n, replace = replace)
+}
+
 
 # This summary is used for the high level report view
 summarise_result <- function(df){
@@ -504,13 +533,15 @@ consolidate_results2 <- function(files,rename_list=NULL,test_detail_file=NULL){
     mutate(
       file_name = fs::path_ext_remove(fs::path_file(file)),
       data = map(file,standardise_csv,rename_list),
-      summary = map(data,summarise_result))
+      summary = map(data,summarise_result)
+      ,detail_summary = map(data,result_detail_summary)
+      )
   
   if(!is.null(test_detail_file)){
     df_test_descriptions <- read_csv(test_detail_file)
     df <- df %>% 
       full_join(df_test_descriptions,by = 'file_name') %>% 
-      filter(display == 'x') %>% 
+      filter(hide != 'x' | is.na(hide)) %>% 
       arrange(test_name)
   }
 
@@ -593,7 +624,7 @@ display_results <- function(df_consolidated){
                       select(any_of('test_description')) %>%
                       pull()
                     htmltools::div(
-                      htmltools::h5(test_description),
+                      htmltools::includeMarkdown(test_description),
                       if (!is.null(df_detail)) {
                         reactable(df_detail,
                                   highlight = TRUE,

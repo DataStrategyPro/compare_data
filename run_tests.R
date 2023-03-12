@@ -52,6 +52,18 @@ run(check_zero_balance(df,'value','category',write = TRUE),log_name)
 
 run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE, df_name = 'x', ref_name = 'y'),log_name)
 
+match_on = c('id', 'category')
+match_on = c('category')
+
+df_results <- check_diff(df,ref,'value',gb=c(match_on), df_name = 'df', ref_name = 'ref')
+
+source_with_results <-  label_transactions(df_results, df, match_on = match_on)
+
+
+get_transaction_sample(source_with_results,n = 10, replace = TRUE)
+get_transaction_sample(source_with_results)
+
+
 df_summarised <- summarise_results('output/2023-02-18/')
 df_summarised %>% as.data.frame()
 df_summarised %>% write_csv('output/df_result_summary.csv')

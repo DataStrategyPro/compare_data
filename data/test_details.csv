@@ -1,8 +1,8 @@
-﻿display,test_name,file_name,test_description,notes,to_do
+﻿hide,test_name,file_name,test_description,notes,to_do
 x,0500_mpg_white_space,db_mpg_white_space,Pass if there is no white space surrounding data,,
-x,0400_diff,df_diff,Pass if diff = 0,,
-x,0400_distinct_count,df_distinct_count,Information to understand column cardinality for analysis,,
-x,0300_null_count,df_null_count,Pass if null count = 0,asdf,
-x,0200_unique_keys,df_unique_keys,Pass if keys are unique,asdf,
-x,0100_zero_balance,df_zero_balance,Pass if balance = 0,asdf,test check_balance code
-x,0600_check_compare,,Pass if matches ref file,,create dedicated function for this
+,0400_diff,df_diff,Pass if diff = 0,,
+,0400_distinct_count,df_distinct_count,Information to understand column cardinality for analysis,,
+,0300_null_count,df_null_count,Pass if null count = 0,asdf,
+,0200_unique_keys,df_unique_keys,Pass if keys are unique,asdf,
+,0100_zero_balance,df_zero_balance,Pass if balance = 0,asdf,test check_balance code
+,0600_check_compare,,Pass if matches ref file,,create dedicated function for this
