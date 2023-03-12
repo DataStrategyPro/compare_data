@@ -50,7 +50,9 @@ run(check_stats(df,gb=c('category','id'),write = TRUE),log_name)
 
 run(check_zero_balance(df,'value','category',write = TRUE),log_name)
 
-run(check_diff(df,ref,'value',gb=c('id','category'),write = TRUE, df_name = 'x', ref_name = 'y'),log_name)
+run(df_diff <- check_diff(df,ref,'value',gb=c('id','category'),write = TRUE, df_name = 'x', ref_name = 'y'),log_name)
+df_diff %>% label_transactions(df, match_on = c('id','category'))
+
 
 match_on = c('id', 'category')
 match_on = c('category')
@@ -72,7 +74,20 @@ source('functions.R')
 data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>%
   consolidate_results2(test_detail_file = 'data/test_details.csv')
 
-data
+
+# The idea of this code is that you can label the transaction table for every test
+# The challenge is knowing what is the transaction table and what to match it on?
+# Potentially provide all the meta data in another table that can actually call all of the tests
+# and pass of the details between all the related stages of tests
+
+# data %>% 
+#   mutate(
+#     label_transactions = map(data,label_transactions)
+#   )
+
+
+
+
 data %>%
   select(test_name, summary, to_do) %>%
   unnest(summary, keep_empty = TRUE) %>%
