@@ -384,6 +384,10 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
   return(df)  
 }
 
+
+# Reporting Functions -----------------------------------------------------
+
+
 # return a sample of n records for the underlying data for each group
 # This function accepts dataframe and a lookup table typically a database table
 # The dataframe typically a summary of the data and contains a 1 to many relationship with the lookup table.
