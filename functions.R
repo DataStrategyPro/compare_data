@@ -535,9 +535,9 @@ consolidate_results <- function(files,rename_list=NULL,test_descriptions_file=NU
 consolidate_results2 <- function(files,rename_list=NULL,test_detail_file=NULL){
   df <- tibble(file = files) %>% 
     mutate(
-      file_name = fs::path_ext_remove(fs::path_file(file)),
-      data = map(file,standardise_csv,rename_list),
-      summary = map(data,summarise_result)
+      file_name = fs::path_ext_remove(fs::path_file(file))
+      ,data = map(file,standardise_csv,rename_list)
+      ,summary = map(data,summarise_result)
       ,detail_summary = map(data,result_detail_summary)
       )
   
