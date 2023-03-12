@@ -384,6 +384,10 @@ check_db_to_ref <- function(dbf,ref,db_value_col=NA,ref_value_col=NA,acceptable_
   return(df)  
 }
 
+
+# Reporting Functions -----------------------------------------------------
+
+
 # return a sample of n records for the underlying data for each group
 # This function accepts dataframe and a lookup table typically a database table
 # The dataframe typically a summary of the data and contains a 1 to many relationship with the lookup table.
@@ -446,7 +450,7 @@ pivot_results <- function(df){
 label_transactions <- function(results, source, match_on){
   source %>% 
     inner_join(
-      df_results %>% 
+      results %>% 
         select(!!!syms(match_on), result, result_detail),
       by = match_on,
       copy = TRUE
@@ -531,9 +535,9 @@ consolidate_results <- function(files,rename_list=NULL,test_descriptions_file=NU
 consolidate_results2 <- function(files,rename_list=NULL,test_detail_file=NULL){
   df <- tibble(file = files) %>% 
     mutate(
-      file_name = fs::path_ext_remove(fs::path_file(file)),
-      data = map(file,standardise_csv,rename_list),
-      summary = map(data,summarise_result)
+      file_name = fs::path_ext_remove(fs::path_file(file))
+      ,data = map(file,standardise_csv,rename_list)
+      ,summary = map(data,summarise_result)
       ,detail_summary = map(data,result_detail_summary)
       )
   

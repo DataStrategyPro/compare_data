@@ -1,9 +1,8 @@
 ---
 title: "Test Results"
 output: 
-  flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+  html_document:
+    
 params:
   test_results: NULL
   test_info: NULL
@@ -17,11 +16,11 @@ report_info <- str_c(run_date,params$test_info,sep = ' | ')
 
 ```
 
-Column
+
 -----------------------------------------------------------------------
 
-### **Results Compiled:** `r report_info`
+**Results Compiled:** `r report_info`
 
-```{r}
+```{r echo=FALSE}
 params$test_results
 ```
