@@ -75,6 +75,7 @@ data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>%
   consolidate_results2(test_detail_file = 'data/test_details.csv')
 
 
+
 # The idea of this code is that you can label the transaction table for every test
 # The challenge is knowing what is the transaction table and what to match it on?
 # Potentially provide all the meta data in another table that can actually call all of the tests
@@ -84,7 +85,6 @@ data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>%
 #   mutate(
 #     label_transactions = map(data,label_transactions)
 #   )
-
 
 
 

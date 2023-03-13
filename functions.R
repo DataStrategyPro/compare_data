@@ -632,7 +632,8 @@ display_results <- function(df_consolidated){
                       select(any_of('test_description')) %>%
                       pull()
                     htmltools::div(
-                      htmltools::includeMarkdown(test_description),
+                      htmltools::h5(test_description),
+                      # htmltools::includeMarkdown(test_description),
                       if (!is.null(df_detail)) {
                         reactable(df_detail,
                                   highlight = TRUE,
