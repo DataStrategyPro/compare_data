@@ -492,11 +492,16 @@ summarise_result <- function(df){
 
 # Summary for second layer of drill down
 result_detail_summary <- function(df){
-  df %>% 
-    group_by(result, result_detail) %>% 
-    summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
-    ungroup() %>% 
-    mutate(pct = n / sum(n, na.rm = TRUE))
+  if(all(c('result','result_detail','n') %in% names(df))){
+    result_summary <- df %>% 
+      group_by(result, result_detail) %>% 
+      summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
+      ungroup() %>% 
+      mutate(pct = n / sum(n, na.rm = TRUE))
+    return(result_summary)
+  }else{
+    return(NULL)    
+  }
 }
 
 # Loop through a folder of result output files
