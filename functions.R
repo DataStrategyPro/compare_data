@@ -278,8 +278,8 @@ check_diff <- function(
         ref_n == 0 ~ paste0('Not in ', ref_name),
         is.na(df_value) ~ paste0('Null value in ', df_name),
         is.na(ref_value) ~ paste0('Null value in ', ref_name),
-        diff > 0 ~ paste(df_name, df_value_col 'is greater than', ref_name, ref_value_col),
-        diff < 0 ~ paste(df_name, df_value_col 'is less than', ref_name, ref_value_col),
+        diff > 0 ~ paste(df_name, df_value_col, 'is greater than', ref_name, ref_value_col),
+        diff < 0 ~ paste(df_name, df_value_col, 'is less than', ref_name, ref_value_col),
         TRUE ~ 'Unexpected error'
       )
     ) %>%
