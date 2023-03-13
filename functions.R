@@ -538,21 +538,20 @@ consolidate_results <- function(files,rename_list=NULL,test_descriptions_file=NU
 }
 
 consolidate_results2 <- function(files,rename_list=NULL,test_detail_file=NULL){
+  df_test_details <- read_csv(test_detail_file)
+  
   df <- tibble(file = files) %>% 
     mutate(
       file_name = fs::path_ext_remove(fs::path_file(file))
       ,data = map(file,standardise_csv,rename_list)
       ,summary = map(data,summarise_result)
       ,detail_summary = map(data,result_detail_summary)
-      )
-  
-  if(!is.null(test_detail_file)){
-    df_test_descriptions <- read_csv(test_detail_file)
-    df <- df %>% 
-      full_join(df_test_descriptions,by = 'file_name') %>% 
+      ) %>% 
+      full_join(df_test_details,by = 'file_name') %>% 
       filter(hide != 'x' | is.na(hide)) %>% 
+      # mutate(test_name = replace_na(test_name, paste0('*', file_name))) %>% 
+      mutate(test_name = ifelse(is.na(test_name), paste0('*', file_name), test_name)) %>% 
       arrange(test_name)
-  }
 
   return(df)
 }
