@@ -65,16 +65,11 @@ source_with_results <-  label_transactions(df_results, df, match_on = match_on)
 get_transaction_sample(source_with_results,n = 10, replace = TRUE)
 get_transaction_sample(source_with_results)
 
-
-df_summarised <- summarise_results('output/2023-02-18/')
-df_summarised %>% as.data.frame()
-df_summarised %>% write_csv('output/df_result_summary.csv')
-
 source('functions.R')
-data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>%
+data <- fs::dir_ls('output/2023-03-14/',glob = '*.csv') %>%
   consolidate_results2(test_detail_file = 'data/test_details.csv')
 
-
+data
 
 # The idea of this code is that you can label the transaction table for every test
 # The challenge is knowing what is the transaction table and what to match it on?
@@ -86,15 +81,9 @@ data <- fs::dir_ls('output/2023-02-18/',glob = '*.csv') %>%
 #     label_transactions = map(data,label_transactions)
 #   )
 
-
-
-data %>%
-  select(test_name, summary, to_do) %>%
-  unnest(summary, keep_empty = TRUE) %>%
-  mutate_if(is.numeric,replace_na, 0) %>%
-  reactable()
-
 test_results <- data %>% display_results()
+
+test_results
 
 output_folder <- paste0("output/",lubridate::today())
 
@@ -105,17 +94,3 @@ rmarkdown::render('report_results.Rmd',
                     test_info = 'useuful info like environment, output folder etc'
                     ))
 
-# rmarkdown::render('report_results_legacy.Rmd',
-#                   output_dir = output_folder, 
-#                   params = list(
-#                     summarise_folder = "output/2023-02-18/",
-#                     test_description_file = "data/test_descriptions.csv"
-#                     ))
-# 
-# rmarkdown::render('report_results2.Rmd',
-#                   output_dir = output_folder, 
-#                   params = list(
-#                     summarise_folder = "output/2023-02-18/",
-#                     test_detail_file = "data/test_details.csv"
-#                     ))
-# 
