@@ -469,13 +469,16 @@ label_transactions <- function(results, source, match_on){
 # For ML use replace = TRUE and increase n to > 1000 to perform over sampling
 # Over sampling is a technique used to make an number of records per group which 
 # important for machine learning to detect the results
-get_transaction_sample <- function(df, n = 10, replace = FALSE){
+get_transaction_sample <- function(df, n_rows = 10, replace = FALSE){
   if(is(df,'tbl_sql')){
     df <- df %>% 
-      slice_sample(by = c(result, result_detail), n = n, with_ties = FALSE) %>% 
+      group_by(result, result_detail) %>% 
+      slice_sample(n = n_rows, with_ties = FALSE) %>% 
       collect()
   }
-  df %>% slice_sample(by = c(result, result_detail), n = n, replace = replace)
+  df %>% 
+    group_by(result, result_detail) %>% 
+    slice_sample(n = n_rows, replace = replace)
 }
 
 
