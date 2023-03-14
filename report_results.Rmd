@@ -25,3 +25,7 @@ Column
 ```{r}
 params$test_results
 ```
+
+*Blue Info column is present when the test does not have the necessary data to be summarised. 
+
+In order for results to be summarised into Pass / Fail % they require a result and n column. Where pct = n / sum(n) for each result
