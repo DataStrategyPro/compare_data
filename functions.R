@@ -439,7 +439,7 @@ pivot_results <- function(df){
       values_from = pct,
       names_expand = TRUE,
       values_fill = 0
-    )     
+    )  
 }
 
 # the source should contain all of the transactions
@@ -448,13 +448,20 @@ pivot_results <- function(df){
 # to understand the cause of failure
 
 label_transactions <- function(results, source, match_on){
-  source %>% 
+  results_ <- results %>% 
+    select(-matches('test_name')) %>% 
+    rename_at(
+      vars(!any_of(match_on) & !starts_with('result'))
+      ,.funs = ~paste0('result_',.)) %>% 
+    select(result, result_detail, everything())
+  
     inner_join(
-      results %>% 
-        select(!!!syms(match_on), result, result_detail),
-      by = match_on,
-      copy = TRUE
-    )
+      source
+      ,results_
+      ,by = match_on
+      ,copy = TRUE
+    ) %>% 
+      select(result, result_detail, starts_with('result_'), everything())
 }
 
 # get a sample of transactions for each result
