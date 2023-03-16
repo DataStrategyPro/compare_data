@@ -507,7 +507,7 @@ result_detail_summary <- function(df){
       group_by(result, result_detail) %>% 
       summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
       ungroup() %>% 
-      mutate(pct = n / sum(n, na.rm = TRUE))
+      mutate(pct = as.double(n) / sum(n, na.rm = TRUE))
     return(result_summary)
   }else{
     return(NULL)    
@@ -664,5 +664,52 @@ display_results <- function(df_consolidated){
                     )
                   }
   )
+  return(rt)
+}
+
+
+display_detail_summary <- function(result, ...){
+  detail_summary <- result_detail_summary(result) %>% collect()
+  transaction_sample <- get_transaction_sample(result, ...) %>% ungroup()
+  
+  rt <- reactable(
+    data = detail_summary
+    ,highlight = TRUE
+    ,columns = list(
+      result = colDef(
+        style = function(value){
+          color <- case_when(
+            value == 'Pass' ~ "#33ca47"
+              ,value == 'Fail' ~ "#f44336"
+              ,value == 'warning' ~ "#e69138"
+              ,value == 'Info' ~ "#2986cc"
+          )
+          
+          list(backgroundColor = color,color = "#ffffff")
+        }
+      )
+      ,pct = colDef(cell = function(value){pct_fmt(value)})
+    )
+    ,details = function(i){
+      r1 <- detail_summary[i,]$result[[1]]
+      r2 <- detail_summary[i,]$result_detail[[1]]
+      
+      filter_sample <- transaction_sample %>% 
+        filter(
+          result == r1
+          & result_detail == r2
+        ) %>% 
+        select(-any_of(c('test_name', 'result', 'result_detail')))
+      
+      reactable(
+        data = filter_sample
+        ,highlight = TRUE
+        ,columns = list(
+          pct = colDef(cell = function(value){pct_fmt(value)})
+        )
+      )
+    }
+  )
+  
   return(rt)
 }
