@@ -476,9 +476,12 @@ get_transaction_sample <- function(df, n_rows = 10, replace = FALSE){
       slice_sample(n = n_rows, with_ties = FALSE) %>% 
       collect()
   }
-  df %>% 
-    group_by(result, result_detail) %>% 
-    slice_sample(n = n_rows, replace = replace)
+  if(replace){
+    df <- df %>% 
+      group_by(result, result_detail) %>% 
+      slice_sample(n = n_rows, replace = TRUE)
+  }
+  return(df)
 }
 
 
