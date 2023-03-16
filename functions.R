@@ -638,27 +638,27 @@ display_results <- function(df_consolidated){
                   )
                   ,details = function(index){
                     df_detail <- df_consolidated[index,]$data[[1]]
+                    result_detail_obj <- df_consolidated[index,]$result_detail_obj[[1]]
+                    
                     test_description <- df_consolidated[index,] %>%
                       select(any_of('test_description')) %>%
                       pull()
                     htmltools::div(
-                      htmltools::h5(test_description),
+                      htmltools::h5(test_description)
                       # htmltools::includeMarkdown(test_description),
-                      if (!is.null(df_detail)) {
+                      
+                      ,if(!is.na(result_detail_obj)){
+                        get(result_detail_obj)
+                      }
+                      
+                      ,if (!is.null(df_detail)) {
                         reactable(df_detail,
                                   highlight = TRUE,
-                                  # selection = 'single',
-                                  # onClick = 'select',
                                   filterable = TRUE,
                                   defaultPageSize = 50,
                                   resizable = TRUE
-                                  # Commenting out because column always needs to be there
-                                  # columns = list(
-                                  #   pct = colDef(format = colFormat(percent = TRUE,digits = 2))
-                                  #
-                                  # )
                         )
-                        
+
                       }
 
                     )

@@ -53,6 +53,7 @@ run(check_zero_balance(df,'value','category',write = TRUE),log_name)
 run(df_diff <- check_diff(df,ref,'value',gb=c('id','category'),write = TRUE, df_name = 'x', ref_name = 'y'),log_name)
 df_diff %>% label_transactions(df, match_on = c('id','category'))
 
+rt_check_diff_result_details <- display_detail_summary(df_diff)
 
 match_on = c('id', 'category')
 match_on = c('category')
@@ -65,7 +66,6 @@ source_with_results <-  label_transactions(df_results, df, match_on = match_on)
 get_transaction_sample(source_with_results,n = 10, replace = TRUE)
 get_transaction_sample(source_with_results)
 
-source('functions.R')
 data <- fs::dir_ls('output/2023-03-14/',glob = '*.csv') %>%
   consolidate_results2(test_detail_file = 'data/test_details.csv')
 
