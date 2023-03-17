@@ -652,18 +652,16 @@ display_results <- function(df_consolidated){
                       
                       ,if(!is.na(result_detail_obj)){
                         get(result_detail_obj)
+                      }else {
+                        if (!is.null(df_detail)) {
+                          reactable(df_detail,
+                                    highlight = TRUE,
+                                    filterable = TRUE,
+                                    defaultPageSize = 50,
+                                    resizable = TRUE
+                          )
+                        }
                       }
-                      
-                      ,if (!is.null(df_detail)) {
-                        reactable(df_detail,
-                                  highlight = TRUE,
-                                  filterable = TRUE,
-                                  defaultPageSize = 50,
-                                  resizable = TRUE
-                        )
-
-                      }
-
                     )
                   }
   )
