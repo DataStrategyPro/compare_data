@@ -2,6 +2,7 @@ library(tidyverse)
 library(dbplyr)
 library(fs)
 library(reactable)
+library(lubridate)
 
 # Helper functions --------------------------------------------------------
 
@@ -652,18 +653,16 @@ display_results <- function(df_consolidated){
                       
                       ,if(!is.na(result_detail_obj)){
                         get(result_detail_obj)
+                      }else {
+                        if (!is.null(df_detail)) {
+                          reactable(df_detail,
+                                    highlight = TRUE,
+                                    filterable = TRUE,
+                                    defaultPageSize = 50,
+                                    resizable = TRUE
+                          )
+                        }
                       }
-                      
-                      ,if (!is.null(df_detail)) {
-                        reactable(df_detail,
-                                  highlight = TRUE,
-                                  filterable = TRUE,
-                                  defaultPageSize = 50,
-                                  resizable = TRUE
-                        )
-
-                      }
-
                     )
                   }
   )
@@ -715,4 +714,43 @@ display_detail_summary <- function(result, ...){
   )
   
   return(rt)
+}
+
+
+
+# machine learning --------------------------------------------------------
+
+make_features <- function(df){
+  df_all <- df %>% 
+    select(-starts_with('result_')) %>% 
+    mutate_all(list(isna = is.na)) %>% 
+    mutate_if(is.character, list(str_len = str_length)) %>% 
+    mutate_if(is.numeric, list(numeric_category = ~case_when(
+      . == 0 ~ 'zero',
+      . > 0 & . < 1 ~ 'small positive',
+      . < 0 & . > -1 ~ 'small negative',
+      . > 1 ~ 'positive',
+      . < -1 ~ 'negative',
+      TRUE ~ 'other'
+    ))) %>% 
+    mutate_if(is.Date
+              ,list(
+                year = year
+                ,month = month
+                ,day = day
+                ,day_cluster = ~case_when(
+                  day < 6 ~ 'start of month',
+                  day > 25 ~ 'end of month',
+                  TRUE ~ 'middle of month',
+                )
+              )
+    )
+  
+  l <- df_all %>% 
+    map(~length(unique(.)))
+  
+  cols <- names(l[l > 1 & l < 50])
+  
+  df_subset <- df_all %>% 
+    select(cols)
 }
