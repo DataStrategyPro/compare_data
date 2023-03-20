@@ -724,7 +724,7 @@ make_features <- function(df){
   df_all <- df %>% 
     select(-starts_with('result_')) %>% 
     mutate_all(list(isna = is.na)) %>% 
-    mutate_if(is.character, list(str_len, str_length)) %>% 
+    mutate_if(is.character, list(str_len = str_length)) %>% 
     mutate_if(is.numeric, list(numeric_category = ~case_when(
       . == 0 ~ 'zero',
       . > 0 & . < 1 ~ 'small positive',
