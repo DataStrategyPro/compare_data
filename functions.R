@@ -116,7 +116,6 @@ check_unique <- function(df,keys){
   df_summary <- bind_rows(df_pass, df_fail) %>% 
     ungroup() %>% 
     mutate(pct = as.double(n) / sum(n))
-    count(result,result_detail) %>% 
 
   return(df_summary)  
 }
