@@ -1,3 +1,5 @@
+source('functions.R')
+
 set.seed(2)
 n = 10
 
@@ -26,7 +28,28 @@ results <- check_diff(
   ,gb = 'category'
 ) 
 
+results
+
 ml <- results %>% 
   make_features()
 
 ml %>% glimpse()
+
+
+results <- check_diff(
+  df = df_src
+  ,ref = df_target
+  ,gb = c('category','date')
+) 
+
+results
+
+results <- check_diff(
+  df = df_src
+  ,ref = df_target
+  ,gb = c('category','date')
+  ,df_value_col = 'amt'
+  ,n_equal = TRUE
+) 
+
+results
