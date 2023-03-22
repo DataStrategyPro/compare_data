@@ -240,56 +240,97 @@ check_complete <- function(df,ref){
 # df is the table you want to check against the ref table to check for variance on a specified numeric field
 # numeric field from table df and ref should be equal when compared on a common aggregate
 check_diff <- function(
-    df,
-    ref,
-    df_value_col,
-    ref_value_col=df_value_col,
-    gb=NULL,
-    test_name=NULL,
-    write=FALSE, 
-    precision = 2,
-    df_name = 'df',
-    ref_name = 'ref'
+    df
+    ,ref
+    ,df_value_col=NULL
+    ,ref_value_col=df_value_col
+    ,gb=NULL
+    ,test_name=NULL
+    ,write=FALSE
+    ,precision = 2
+    ,df_name = 'df'
+    ,ref_name = 'ref'
+    ,n_equal = FALSE
     ){
   if(is.null(test_name)){
     test_name <- mk_test_name(df,'diff')
   }
   
-  df <- df %>% 
-    group_by(!!!syms(gb)) %>% 
-    summarise(df_value = sum(!!sym(df_value_col),na.rm = TRUE),df_n = n())
-  
-  ref <- ref %>% 
-    group_by(!!!syms(gb)) %>% 
-    summarise(ref_value = sum(!!sym(ref_value_col),na.rm = TRUE),ref_n = n())
+  if(is.null(df_value_col)){
+    df <- df %>% 
+      group_by(!!!syms(gb)) %>% 
+      summarise(df_n = n())
+    
+    ref <- ref %>% 
+      group_by(!!!syms(gb)) %>% 
+      summarise(ref_n = n())
+  }else{
+    df <- df %>% 
+      group_by(!!!syms(gb)) %>% 
+      summarise(df_value = sum(!!sym(df_value_col),na.rm = TRUE),df_n = n())
+    
+    ref <- ref %>% 
+      group_by(!!!syms(gb)) %>% 
+      summarise(ref_value = sum(!!sym(ref_value_col),na.rm = TRUE),ref_n = n())
+  }
   
   df <- df %>% 
     full_join(ref,by = gb,copy = TRUE) %>% 
     ungroup() %>% 
     mutate(
-      diff = round(df_value - ref_value,precision),
-      df_n = ifelse(is.na(df_n),0,df_n),
-      ref_n = ifelse(is.na(ref_n),0,ref_n),
-      n = max(df_n, ref_n),
-      pct = as.double(n) / sum(n),
-      result = case_when(diff == 0 ~ 'Pass', TRUE ~ 'Fail'),
-      result_detail = case_when(
-        diff == 0 ~ 'Diff = 0',
-        df_n == 0 ~ paste0('Not in ', df_name),
-        ref_n == 0 ~ paste0('Not in ', ref_name),
-        is.na(df_value) ~ paste0('Null value in ', df_name),
-        is.na(ref_value) ~ paste0('Null value in ', ref_name),
-        diff > 0 ~ paste(df_name, df_value_col, 'is greater than', ref_name, ref_value_col),
-        diff < 0 ~ paste(df_name, df_value_col, 'is less than', ref_name, ref_value_col),
-        TRUE ~ 'Unexpected error'
+      df_n = ifelse(is.na(df_n),0,df_n)
+      ,ref_n = ifelse(is.na(ref_n),0,ref_n)
+      ,n = max(df_n, ref_n)
+      ,pct = as.double(n) / sum(n)
+      ,result = case_when(
+        df_n > 0 & ref_n > 0 ~ 'Pass'
+        ,TRUE ~ 'Warning'
       )
-    ) %>%
+      ,result_detail = case_when(
+        df_n == 0 ~ paste0(paste(gb, collapse = ','),': Not in ', df_name)
+        ,ref_n == 0 ~ paste0(paste(gb, collapse = ','),': Not in ', ref_name)
+        ,TRUE ~ paste0(paste(gb, collapse = ','), ': in both tables')
+      )
+    ) 
+  
+  if(!is.null(df_value_col)){
+    df <- df %>% 
+      mutate(
+        diff = round(df_value - ref_value,precision)
+        ,result = case_when(
+          diff == 0 ~ 'Pass'
+          ,diff != 0 ~ 'Fail'
+          ,TRUE ~ result)
+        ,result_detail = case_when(
+          diff == 0 ~ 'Diff = 0'
+          ,is.na(df_value) ~ paste0('Null value in ', df_name)
+          ,is.na(ref_value) ~ paste0('Null value in ', ref_name)
+          ,diff > 0 ~ paste(df_name, df_value_col, 'is greater than', ref_name, ref_value_col)
+          ,diff < 0 ~ paste(df_name, df_value_col, 'is less than', ref_name, ref_value_col)
+          ,TRUE ~ result_detail
+        )
+        
+      ) %>%
+      rename(
+        '{df_name}_value' := df_value
+        ,'{ref_name}_value' := ref_value
+      )
+  }  
+  
+  if(n_equal){
+    df <- df %>% 
+      mutate(
+        result = ifelse(df_n == ref_n & result == 'Pass', 'Pass', 'Fail')
+        ,result_detail = ifelse(df_n == ref_n & result == 'Pass', result_detail, 'n not equal')
+      )
+  }
+  
+  
+  df %>%
     rename(
-      '{df_name}_value' := df_value, 
-      '{ref_name}_value' := ref_value, 
-      '{df_name}_n' := df_n, 
-      '{ref_name}_n' := ref_n
-    ) %>% 
+      '{df_name}_n' := df_n 
+      ,'{ref_name}_n' := ref_n
+    ) %>%
     # select(-df_n,-ref_n) %>% 
     add_test_name(test_name)#  %>%
     # mutate(test_name = paste(test_name,!!!syms(gb)))
@@ -720,17 +761,20 @@ display_detail_summary <- function(result, ...){
 
 # machine learning --------------------------------------------------------
 
-make_features <- function(df){
+make_features <- function(df, n = 15){
   df_all <- df %>% 
     select(-starts_with('result_')) %>% 
     mutate_all(list(isna = is.na)) %>% 
+    mutate_if(is.character, replace_na, '') %>% 
     mutate_if(is.character, list(str_len = str_length)) %>% 
+    mutate_if(is.numeric, replace_na, 999999) %>% 
     mutate_if(is.numeric, list(numeric_category = ~case_when(
       . == 0 ~ 'zero',
       . > 0 & . < 1 ~ 'small positive',
       . < 0 & . > -1 ~ 'small negative',
       . > 1 ~ 'positive',
       . < -1 ~ 'negative',
+      . == 999999 ~ 'na',
       TRUE ~ 'other'
     ))) %>% 
     mutate_if(is.Date
@@ -749,7 +793,7 @@ make_features <- function(df){
   l <- df_all %>% 
     map(~length(unique(.)))
   
-  cols <- names(l[l > 1 & l < 50])
+  cols <- names(l[l > 1 & l < n])
   
   df_subset <- df_all %>% 
     select(cols)
