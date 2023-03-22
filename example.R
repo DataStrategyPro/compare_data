@@ -29,4 +29,4 @@ results <- check_diff(
 ml <- results %>% 
   make_features()
 
-ml
+ml %>% glimpse()
