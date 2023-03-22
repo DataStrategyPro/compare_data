@@ -91,6 +91,36 @@ check_unique_keys <- function(df,keys,test_name=NULL,write=FALSE,...){
   return(df)  
 }
 
+check_unique <- function(df,keys){
+  df <- df %>% 
+    count(!!!syms(keys))  %>% 
+    mutate(
+      result = case_when(
+        n==1 ~ 'Pass'
+        ,TRUE ~ 'Fail')
+      ,result_detail = case_when(
+        n==1 ~ ''
+        ,TRUE ~ 'duplicates')
+    ) %>% 
+    ungroup()
+  
+  df_pass <- df %>% 
+    filter(result == 'Pass') %>% 
+    count(result, result_detail) %>% 
+    collect()
+  
+  df_fail <- df %>% 
+    filter(result == 'Fail') %>% 
+    collect()
+  
+  df_summary <- bind_rows(df_pass, df_fail) %>% 
+    ungroup() %>% 
+    mutate(pct = as.double(n) / sum(n))
+    count(result,result_detail) %>% 
+
+  return(df_summary)  
+}
+
 
 check_white_space <- function(df,table_name=deparse(substitute(df)),test_name='white_space',write=FALSE){
   test_name <- paste(table_name,test_name,sep = '_')
@@ -287,9 +317,13 @@ check_diff <- function(
         ,TRUE ~ 'Warning'
       )
       ,result_detail = case_when(
-        df_n == 0 ~ paste0(paste(gb, collapse = ','),': Not in ', df_name)
-        ,ref_n == 0 ~ paste0(paste(gb, collapse = ','),': Not in ', ref_name)
-        ,TRUE ~ paste0(paste(gb, collapse = ','), ': in both tables')
+        df_n == 0 ~ paste0('Not in ', df_name)
+        ,ref_n == 0 ~ paste0('Not in ', ref_name)
+        ,TRUE ~ 'data in both tables'
+        # removing this detail to increase db compatibility
+        # df_n == 0 ~ paste0(paste(gb, collapse = ','),': Not in ', df_name)
+        # ,ref_n == 0 ~ paste0(paste(gb, collapse = ','),': Not in ', ref_name)
+        # ,TRUE ~ paste0(paste(gb, collapse = ','), ': in both tables')
       )
     ) 
   
