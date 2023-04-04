@@ -359,7 +359,7 @@ check_diff <- function(
   }
   
   
-  df %>%
+  df <- df %>%
     rename(
       '{df_name}_n' := df_n 
       ,'{ref_name}_n' := ref_n
