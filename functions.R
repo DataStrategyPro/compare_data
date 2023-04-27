@@ -309,7 +309,7 @@ check_diff <- function(
     mutate(
       df_n = ifelse(is.na(df_n),0,df_n)
       ,ref_n = ifelse(is.na(ref_n),0,ref_n)
-      ,n = pmax(df_n, ref_n)
+      ,n = ifelse(df_n > ref_n, df_n, ref_n)
       ,pct = as.double(n) / sum(n)
       ,result = case_when(
         df_n > 0 & ref_n > 0 ~ 'Pass'
